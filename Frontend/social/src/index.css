@@ -674,6 +674,101 @@ a {
   margin-top: 0.25rem;
 }
 
+/* ---------- Eventos ---------- */
+.events-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.event-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.event-form input,
+.event-form textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+}
+.event-form input:focus,
+.event-form textarea:focus {
+  border-color: var(--green, #5a9e2f);
+}
+.event-when {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.event-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--green, #5a9e2f);
+  border-radius: 12px;
+  padding: 1rem;
+}
+.event-img {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 0.6rem;
+}
+.event-date {
+  color: var(--green-dark, #487f24);
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-transform: capitalize;
+}
+.event-title {
+  margin: 0.2rem 0 0.4rem;
+  font-size: 1.2rem;
+}
+.event-loc {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.event-desc {
+  margin: 0.5rem 0;
+  line-height: 1.4;
+}
+.event-host {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 0.5rem 0 0.3rem;
+}
+.event-counts {
+  margin-bottom: 0.6rem;
+}
+.event-rsvp {
+  display: flex;
+  gap: 0.5rem;
+}
+.rsvp-btn {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+}
+.rsvp-btn:hover {
+  border-color: var(--green, #5a9e2f);
+}
+.rsvp-btn.active {
+  background: var(--green, #5a9e2f);
+  color: #fff;
+  border-color: var(--green, #5a9e2f);
+}
+
 /* Botón "marcar leídas" en el widget */
 .news-markread {
   float: right;

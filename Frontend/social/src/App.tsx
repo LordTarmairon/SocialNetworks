@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import { ContactsPage } from './pages/ContactsPage';
+import { EventsPage } from './pages/EventsPage';
 import { FeedPage } from './pages/FeedPage';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -43,6 +44,14 @@ function App() {
         element={
           <Protected>
             <ContactsPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/eventos"
+        element={
+          <Protected>
+            <EventsPage />
           </Protected>
         }
       />
