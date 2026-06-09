@@ -26,5 +26,30 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Relaciones de amistad (dos lados de la misma tabla Friendship).
+  sentRequests     Friendship[] @relation("SentRequests")
+  receivedRequests Friendship[] @relation("ReceivedRequests")
+
   @@map("users")
+}
+
+// ---------------------------------------------------------------------------
+// Amistad / contacto entre dos usuarios.
+// status: "PENDING" (solicitud enviada) | "ACCEPTED" (ya son amigos).
+// Una fila representa la relación; el "requester" la inició.
+// ---------------------------------------------------------------------------
+model Friendship {
+  id          String   @id @default(uuid())
+  requesterId String
+  addresseeId String
+  status      String   @default("PENDING")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  requester User @relation("SentRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("ReceivedRequests", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId])
+  @@map("friendships")
 }
