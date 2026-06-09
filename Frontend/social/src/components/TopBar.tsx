@@ -7,7 +7,7 @@ export function TopBar() {
   return (
     <header className="topbar">
       <Link className="topbar-logo" to="/">
-        tuenti
+        mellon
       </Link>
       <nav className="topbar-nav">
         <Link to="/">Inicio</Link>

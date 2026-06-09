@@ -75,6 +75,7 @@ export function ChatPage() {
   return (
     <div className="chat-layout">
       <aside className="sidebar">
+        <div className="sidebar-brand">Palantír</div>
         <header className="sidebar-header">
           <div className="home-me">
             <Avatar name={user?.displayName ?? '?'} size={34} />

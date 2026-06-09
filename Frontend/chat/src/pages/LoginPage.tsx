@@ -27,6 +27,7 @@ export function LoginPage() {
 
   return (
     <div className="auth-layout">
+      <div className="auth-logo">Palantír</div>
       <form className="auth-card" onSubmit={handleSubmit}>
         <h1 className="auth-title">Entrar</h1>
         <p className="auth-subtitle">Bienvenido de vuelta 👋</p>

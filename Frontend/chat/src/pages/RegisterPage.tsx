@@ -36,6 +36,7 @@ export function RegisterPage() {
 
   return (
     <div className="auth-layout">
+      <div className="auth-logo">Palantír</div>
       <form className="auth-card" onSubmit={handleSubmit}>
         <h1 className="auth-title">Crear cuenta</h1>
         <p className="auth-subtitle">Únete en menos de un minuto</p>

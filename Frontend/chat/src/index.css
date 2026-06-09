@@ -29,10 +29,27 @@ body {
 /* ---------- Pantallas de autenticación ---------- */
 .auth-layout {
   min-height: 100vh;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
   padding: 1rem;
   background: radial-gradient(circle at top, #16242c, var(--bg));
+}
+
+.auth-logo {
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+}
+
+.sidebar-brand {
+  padding: 0.6rem 1rem 0;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.5px;
 }
 
 .auth-card {

@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
+import { NewsWidget } from '../components/NewsWidget';
 import { PostCard } from '../components/PostCard';
 import { StoriesBar } from '../components/StoriesBar';
 import { TopBar } from '../components/TopBar';
@@ -72,8 +73,9 @@ export function FeedPage() {
   return (
     <>
       <TopBar />
-      <main className="feed">
-        <StoriesBar groups={stories} onChanged={loadStories} />
+      <div className="page">
+        <main className="feed">
+          <StoriesBar groups={stories} onChanged={loadStories} />
 
         <form className="composer" onSubmit={submitPost}>
           <div className="composer-row">
@@ -133,7 +135,9 @@ export function FeedPage() {
             />
           ))
         )}
-      </main>
+        </main>
+        <NewsWidget />
+      </div>
     </>
   );
 }

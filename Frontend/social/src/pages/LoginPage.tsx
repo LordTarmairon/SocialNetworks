@@ -28,8 +28,8 @@ export function LoginPage() {
   return (
     <div className="auth-layout">
       <div className="auth-brand">
-        <h1>tuenti</h1>
-        <p>Reconecta con tu gente.</p>
+        <h1>mellon</h1>
+        <p>Di "amigo" y entra. Reconecta con tu gente.</p>
       </div>
       <form className="auth-card" onSubmit={handleSubmit}>
         <h2>Iniciar sesión</h2>
