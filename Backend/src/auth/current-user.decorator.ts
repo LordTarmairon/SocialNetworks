@@ -6,6 +6,8 @@ export interface AuthUser {
   username: string;
   displayName: string;
   avatarUrl: string | null;
+  showReadReceipts: boolean;
+  showLastSeen: boolean;
 }
 
 /** Inyecta el usuario autenticado (puesto por JwtStrategy) en el controlador. */

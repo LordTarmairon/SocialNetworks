@@ -26,6 +26,13 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // Presencia.
+  lastSeenAt DateTime?
+
+  // Privacidad (estilo WhatsApp): si se desactivan, ni se comparte ni se ve.
+  showReadReceipts Boolean @default(true)
+  showLastSeen     Boolean @default(true)
+
   // Relaciones de amistad (dos lados de la misma tabla Friendship).
   sentRequests     Friendship[] @relation("SentRequests")
   receivedRequests Friendship[] @relation("ReceivedRequests")
@@ -87,11 +94,12 @@ model ConversationParticipant {
 }
 
 model Message {
-  id             String   @id @default(uuid())
+  id             String    @id @default(uuid())
   conversationId String
   senderId       String
   content        String
-  createdAt      DateTime @default(now())
+  createdAt      DateTime  @default(now())
+  readAt         DateTime?
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)

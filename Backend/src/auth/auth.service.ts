@@ -62,7 +62,15 @@ export class AuthService {
   /** Construye la respuesta de auth: token + usuario sin datos sensibles. */
   private buildAuthResponse(
     userId: string,
-    user: { id: string; email: string; username: string; displayName: string },
+    user: {
+      id: string;
+      email: string;
+      username: string;
+      displayName: string;
+      avatarUrl: string | null;
+      showReadReceipts: boolean;
+      showLastSeen: boolean;
+    },
   ) {
     const token = this.jwt.sign({ sub: userId, username: user.username });
     return {
@@ -72,6 +80,9 @@ export class AuthService {
         email: user.email,
         username: user.username,
         displayName: user.displayName,
+        avatarUrl: user.avatarUrl,
+        showReadReceipts: user.showReadReceipts,
+        showLastSeen: user.showLastSeen,
       },
     };
   }

@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PresenceService } from './presence.service';
 
 const publicUser = {
   id: true,
@@ -12,11 +13,20 @@ const publicUser = {
   avatarUrl: true,
 } as const;
 
+// Para calcular presencia necesitamos también los flags de privacidad.
+const participantUser = {
+  ...publicUser,
+  showLastSeen: true,
+  lastSeenAt: true,
+} as const;
+
 @Injectable()
 export class MessagesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly presence: PresenceService,
+  ) {}
 
-  /** Verifica que dos usuarios son amigos (relación ACCEPTED). */
   private async assertFriends(meId: string, otherId: string) {
     const friendship = await this.prisma.friendship.findFirst({
       where: {
@@ -32,7 +42,6 @@ export class MessagesService {
     }
   }
 
-  /** Comprueba que el usuario participa en la conversación. */
   private async assertParticipant(meId: string, conversationId: string) {
     const participant = await this.prisma.conversationParticipant.findUnique({
       where: { conversationId_userId: { conversationId, userId: meId } },
@@ -42,7 +51,26 @@ export class MessagesService {
     }
   }
 
-  /** Obtiene (o crea) la conversación 1-a-1 entre el usuario actual y otro. */
+  private async getFlags(userId: string) {
+    return this.prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { showReadReceipts: true, showLastSeen: true },
+    });
+  }
+
+  /** Presencia de un usuario respetando su ajuste "showLastSeen". */
+  private presenceOf(user: {
+    id: string;
+    showLastSeen: boolean;
+    lastSeenAt: Date | null;
+  }) {
+    if (!user.showLastSeen) return null;
+    return {
+      online: this.presence.isOnline(user.id),
+      lastSeenAt: user.lastSeenAt,
+    };
+  }
+
   async getOrCreateConversation(meId: string, otherId: string) {
     await this.assertFriends(meId, otherId);
 
@@ -61,23 +89,20 @@ export class MessagesService {
       existing ??
       (await this.prisma.conversation.create({
         data: {
-          participants: {
-            create: [{ userId: meId }, { userId: otherId }],
-          },
+          participants: { create: [{ userId: meId }, { userId: otherId }] },
         },
       }));
 
     return this.toSummary(meId, conversation.id);
   }
 
-  /** Lista las conversaciones del usuario con el otro participante y el último mensaje. */
   async listConversations(meId: string) {
     const parts = await this.prisma.conversationParticipant.findMany({
       where: { userId: meId },
       include: {
         conversation: {
           include: {
-            participants: { include: { user: { select: publicUser } } },
+            participants: { include: { user: { select: participantUser } } },
             messages: { orderBy: { createdAt: 'desc' }, take: 1 },
           },
         },
@@ -88,22 +113,27 @@ export class MessagesService {
     return parts.map((p) => {
       const other = p.conversation.participants.find(
         (pp) => pp.userId !== meId,
-      );
+      )?.user;
       const last = p.conversation.messages[0];
       return {
         id: p.conversation.id,
-        otherUser: other?.user ?? null,
+        otherUser: other ? this.toPublic(other) : null,
+        presence: other ? this.presenceOf(other) : null,
         lastMessage: last
-          ? { content: last.content, createdAt: last.createdAt }
+          ? {
+              content: last.content,
+              createdAt: last.createdAt,
+              senderId: last.senderId,
+            }
           : null,
         updatedAt: p.conversation.updatedAt,
       };
     });
   }
 
-  /** Devuelve los mensajes de una conversación (más recientes). */
   async listMessages(meId: string, conversationId: string) {
     await this.assertParticipant(meId, conversationId);
+    const me = await this.getFlags(meId);
     const messages = await this.prisma.message.findMany({
       where: { conversationId },
       orderBy: { createdAt: 'asc' },
@@ -115,10 +145,11 @@ export class MessagesService {
       senderId: m.senderId,
       content: m.content,
       createdAt: m.createdAt,
+      // Reciprocidad: si yo oculto mis "visto", tampoco veo los de los demás.
+      readAt: me.showReadReceipts ? m.readAt : null,
     }));
   }
 
-  /** Crea un mensaje y actualiza la fecha de la conversación. */
   async sendMessage(meId: string, conversationId: string, content: string) {
     await this.assertParticipant(meId, conversationId);
     const message = await this.prisma.message.create({
@@ -134,10 +165,33 @@ export class MessagesService {
       senderId: message.senderId,
       content: message.content,
       createdAt: message.createdAt,
+      readAt: null as Date | null,
     };
   }
 
-  /** IDs de los participantes (para notificar por WebSocket). */
+  /**
+   * Marca como leídos los mensajes recibidos en una conversación.
+   * Solo lo hace si el usuario tiene activadas las confirmaciones de lectura.
+   * Devuelve a quién notificar y la fecha, o null si no hay nada/está desactivado.
+   */
+  async markRead(meId: string, conversationId: string) {
+    await this.assertParticipant(meId, conversationId);
+    const me = await this.getFlags(meId);
+    if (!me.showReadReceipts) return null;
+
+    const now = new Date();
+    const result = await this.prisma.message.updateMany({
+      where: { conversationId, senderId: { not: meId }, readAt: null },
+      data: { readAt: now },
+    });
+    if (result.count === 0) return null;
+
+    const others = (await this.participantIds(conversationId)).filter(
+      (id) => id !== meId,
+    );
+    return { conversationId, readAt: now, notify: others };
+  }
+
   async participantIds(conversationId: string): Promise<string[]> {
     const parts = await this.prisma.conversationParticipant.findMany({
       where: { conversationId },
@@ -146,22 +200,54 @@ export class MessagesService {
     return parts.map((p) => p.userId);
   }
 
-  /** Resumen de una conversación concreta para el usuario actual. */
+  /** IDs de los amigos aceptados de un usuario (para notificar presencia). */
+  async friendIds(userId: string): Promise<string[]> {
+    const fs = await this.prisma.friendship.findMany({
+      where: {
+        status: 'ACCEPTED',
+        OR: [{ requesterId: userId }, { addresseeId: userId }],
+      },
+      select: { requesterId: true, addresseeId: true },
+    });
+    return fs.map((f) =>
+      f.requesterId === userId ? f.addresseeId : f.requesterId,
+    );
+  }
+
+  private toPublic(u: {
+    id: string;
+    username: string;
+    displayName: string;
+    avatarUrl: string | null;
+  }) {
+    return {
+      id: u.id,
+      username: u.username,
+      displayName: u.displayName,
+      avatarUrl: u.avatarUrl,
+    };
+  }
+
   private async toSummary(meId: string, conversationId: string) {
     const conv = await this.prisma.conversation.findUniqueOrThrow({
       where: { id: conversationId },
       include: {
-        participants: { include: { user: { select: publicUser } } },
+        participants: { include: { user: { select: participantUser } } },
         messages: { orderBy: { createdAt: 'desc' }, take: 1 },
       },
     });
-    const other = conv.participants.find((p) => p.userId !== meId);
+    const other = conv.participants.find((p) => p.userId !== meId)?.user;
     const last = conv.messages[0];
     return {
       id: conv.id,
-      otherUser: other?.user ?? null,
+      otherUser: other ? this.toPublic(other) : null,
+      presence: other ? this.presenceOf(other) : null,
       lastMessage: last
-        ? { content: last.content, createdAt: last.createdAt }
+        ? {
+            content: last.content,
+            createdAt: last.createdAt,
+            senderId: last.senderId,
+          }
         : null,
       updatedAt: conv.updatedAt,
     };
