@@ -6,6 +6,7 @@ export interface AuthUser {
   username: string;
   displayName: string;
   avatarUrl: string | null;
+  bio: string | null;
   showReadReceipts: boolean;
   showLastSeen: boolean;
 }

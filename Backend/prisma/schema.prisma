@@ -41,6 +41,12 @@ model User {
   conversations ConversationParticipant[]
   messages      Message[]
 
+  // Red social (estilo Tuenti).
+  posts    Post[]
+  comments Comment[]
+  likes    Like[]
+  stories  Story[]
+
   @@map("users")
 }
 
@@ -107,4 +113,63 @@ model Message {
 
   @@index([conversationId, createdAt])
   @@map("messages")
+}
+
+// ===========================================================================
+// Red social estilo Tuenti: publicaciones (muro/feed), comentarios, "me gusta"
+// y stories efímeras.
+// ===========================================================================
+model Post {
+  id        String   @id @default(uuid())
+  authorId  String
+  content   String
+  imageUrl  String?
+  createdAt DateTime @default(now())
+
+  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments Comment[]
+  likes    Like[]
+
+  @@index([authorId, createdAt])
+  @@map("posts")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  postId    String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@map("comments")
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("likes")
+}
+
+model Story {
+  id        String   @id @default(uuid())
+  authorId  String
+  imageUrl  String
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId])
+  @@map("stories")
 }

@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { FriendsModule } from './friends/friends.module';
 import { MessagesModule } from './messages/messages.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { SocialModule } from './social/social.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { UsersModule } from './users/users.module';
 
@@ -25,6 +26,7 @@ import { UsersModule } from './users/users.module';
     MessagesModule,
     UsersModule,
     UploadsModule,
+    SocialModule,
   ],
   controllers: [AppController],
   providers: [AppService],
