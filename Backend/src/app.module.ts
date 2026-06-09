@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { FriendsModule } from './friends/friends.module';
 import { MessagesModule } from './messages/messages.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SocialModule } from './social/social.module';
 import { UploadsModule } from './uploads/uploads.module';
@@ -27,6 +28,7 @@ import { UsersModule } from './users/users.module';
     UsersModule,
     UploadsModule,
     SocialModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

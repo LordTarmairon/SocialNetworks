@@ -26,6 +26,15 @@ export class ProfileService {
     });
     if (!user) throw new NotFoundException('Usuario no encontrado');
 
+    // Registrar la visita (una fila por visitante, actualiza la fecha).
+    if (meId !== user.id) {
+      await this.prisma.profileView.upsert({
+        where: { viewerId_profileId: { viewerId: meId, profileId: user.id } },
+        create: { viewerId: meId, profileId: user.id },
+        update: { updatedAt: new Date() },
+      });
+    }
+
     const [postCount, friendCount, friendship] = await Promise.all([
       this.prisma.post.count({ where: { authorId: user.id } }),
       this.prisma.friendship.count({

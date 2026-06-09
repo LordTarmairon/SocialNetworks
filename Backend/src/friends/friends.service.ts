@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 // Campos públicos de un usuario (nunca exponemos passwordHash ni email ajeno).
@@ -22,7 +23,10 @@ export type RelationStatus =
 
 @Injectable()
 export class FriendsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /** Busca usuarios por username o nombre, anotando la relación con el actual. */
   async search(meId: string, query: string) {
@@ -134,6 +138,7 @@ export class FriendsService {
     await this.prisma.friendship.create({
       data: { requesterId: meId, addresseeId },
     });
+    await this.notifications.create(addresseeId, meId, 'friend_request');
     return { ok: true };
   }
 
@@ -149,6 +154,8 @@ export class FriendsService {
       where: { id: requestId },
       data: { status: 'ACCEPTED' },
     });
+    // Avisamos a quien envió la solicitud de que la aceptaste.
+    await this.notifications.create(req.requesterId, meId, 'friend_accept');
     return { ok: true };
   }
 

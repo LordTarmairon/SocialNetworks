@@ -47,6 +47,12 @@ model User {
   likes    Like[]
   stories  Story[]
 
+  // Novedades: visitas a perfil y notificaciones.
+  viewsMade     ProfileView[]  @relation("ViewsMade")
+  viewsReceived ProfileView[]  @relation("ViewsReceived")
+  notifications Notification[] @relation("NotificationsReceived")
+  actions       Notification[] @relation("NotificationsActed")
+
   @@map("users")
 }
 
@@ -172,4 +178,42 @@ model Story {
 
   @@index([authorId])
   @@map("stories")
+}
+
+// ---------------------------------------------------------------------------
+// Visitas a perfil (una fila por visitante; se actualiza la fecha).
+// ---------------------------------------------------------------------------
+model ProfileView {
+  id        String   @id @default(uuid())
+  viewerId  String
+  profileId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  viewer  User @relation("ViewsMade", fields: [viewerId], references: [id], onDelete: Cascade)
+  profile User @relation("ViewsReceived", fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([viewerId, profileId])
+  @@index([profileId])
+  @@map("profile_views")
+}
+
+// ---------------------------------------------------------------------------
+// Notificaciones para el panel de "Novedades".
+// type: like | comment | friend_request | friend_accept
+// ---------------------------------------------------------------------------
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  actorId   String
+  type      String
+  postId    String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user  User @relation("NotificationsReceived", fields: [userId], references: [id], onDelete: Cascade)
+  actor User @relation("NotificationsActed", fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("notifications")
 }

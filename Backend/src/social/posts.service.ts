@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 const publicUser = {
@@ -31,7 +32,10 @@ type RawPost = {
 
 @Injectable()
 export class PostsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /** ¿Son amigos (o el mismo usuario)? */
   private async areFriends(meId: string, otherId: string): Promise<boolean> {
@@ -145,14 +149,22 @@ export class PostsService {
   async like(meId: string, postId: string) {
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
-      select: { id: true },
+      select: { id: true, authorId: true },
     });
     if (!post) throw new NotFoundException('Publicación no encontrada');
+    const existing = await this.prisma.like.findUnique({
+      where: { postId_userId: { postId, userId: meId } },
+      select: { id: true },
+    });
     await this.prisma.like.upsert({
       where: { postId_userId: { postId, userId: meId } },
       create: { postId, userId: meId },
       update: {},
     });
+    // Notificamos al autor solo la primera vez.
+    if (!existing) {
+      await this.notifications.create(post.authorId, meId, 'like', postId);
+    }
     return { ok: true };
   }
 
@@ -164,13 +176,14 @@ export class PostsService {
   async addComment(meId: string, postId: string, content: string) {
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
-      select: { id: true },
+      select: { id: true, authorId: true },
     });
     if (!post) throw new NotFoundException('Publicación no encontrada');
     const comment = await this.prisma.comment.create({
       data: { postId, authorId: meId, content },
       include: { author: { select: publicUser } },
     });
+    await this.notifications.create(post.authorId, meId, 'comment', postId);
     return {
       id: comment.id,
       content: comment.content,
