@@ -17,6 +17,7 @@ import { PresenceService } from './presence.service';
 interface SendPayload {
   conversationId: string;
   content: string;
+  attachmentUrl?: string;
 }
 
 /**
@@ -103,7 +104,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!userId) return { error: 'No autenticado' };
 
     const content = (body?.content ?? '').trim();
-    if (!content || !body?.conversationId) {
+    const attachmentUrl = body?.attachmentUrl?.trim() || null;
+    if ((!content && !attachmentUrl) || !body?.conversationId) {
       return { error: 'Mensaje inválido' };
     }
 
@@ -112,6 +114,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         userId,
         body.conversationId,
         content,
+        attachmentUrl,
       );
       const participants = await this.messages.participantIds(
         body.conversationId,

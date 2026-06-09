@@ -121,7 +121,7 @@ export class MessagesService {
         presence: other ? this.presenceOf(other) : null,
         lastMessage: last
           ? {
-              content: last.content,
+              content: this.preview(last),
               createdAt: last.createdAt,
               senderId: last.senderId,
             }
@@ -129,6 +129,12 @@ export class MessagesService {
         updatedAt: p.conversation.updatedAt,
       };
     });
+  }
+
+  /** Texto resumido del último mensaje (para la lista de chats). */
+  private preview(m: { content: string; attachmentUrl: string | null }) {
+    if (m.attachmentUrl && !m.content) return '📷 Foto';
+    return m.content;
   }
 
   async listMessages(meId: string, conversationId: string) {
@@ -144,16 +150,27 @@ export class MessagesService {
       conversationId: m.conversationId,
       senderId: m.senderId,
       content: m.content,
+      attachmentUrl: m.attachmentUrl,
       createdAt: m.createdAt,
       // Reciprocidad: si yo oculto mis "visto", tampoco veo los de los demás.
       readAt: me.showReadReceipts ? m.readAt : null,
     }));
   }
 
-  async sendMessage(meId: string, conversationId: string, content: string) {
+  async sendMessage(
+    meId: string,
+    conversationId: string,
+    content: string,
+    attachmentUrl?: string | null,
+  ) {
     await this.assertParticipant(meId, conversationId);
     const message = await this.prisma.message.create({
-      data: { conversationId, senderId: meId, content },
+      data: {
+        conversationId,
+        senderId: meId,
+        content,
+        attachmentUrl: attachmentUrl ?? null,
+      },
     });
     await this.prisma.conversation.update({
       where: { id: conversationId },
@@ -164,6 +181,7 @@ export class MessagesService {
       conversationId: message.conversationId,
       senderId: message.senderId,
       content: message.content,
+      attachmentUrl: message.attachmentUrl,
       createdAt: message.createdAt,
       readAt: null as Date | null,
     };
@@ -244,7 +262,7 @@ export class MessagesService {
       presence: other ? this.presenceOf(other) : null,
       lastMessage: last
         ? {
-            content: last.content,
+            content: this.preview(last),
             createdAt: last.createdAt,
             senderId: last.senderId,
           }

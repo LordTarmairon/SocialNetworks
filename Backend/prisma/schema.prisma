@@ -98,6 +98,7 @@ model Message {
   conversationId String
   senderId       String
   content        String
+  attachmentUrl  String?
   createdAt      DateTime  @default(now())
   readAt         DateTime?
 

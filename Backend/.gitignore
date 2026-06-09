@@ -10,6 +10,9 @@
 .env.*
 !.env.example
 
+# Archivos subidos por usuarios (no versionar)
+/uploads
+
 # Logs
 *.log
 prisma-dev.log
