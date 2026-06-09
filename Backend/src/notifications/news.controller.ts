@@ -18,6 +18,11 @@ export class NewsController {
     return this.news.getNews(me.id);
   }
 
+  @Get('visitors')
+  visitors(@CurrentUser() me: AuthUser) {
+    return this.news.listVisitors(me.id);
+  }
+
   /** Marca todas las notificaciones como leídas. */
   @Post('read')
   markRead(@CurrentUser() me: AuthUser) {

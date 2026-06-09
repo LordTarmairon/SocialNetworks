@@ -29,7 +29,12 @@ export interface News {
   unread: number;
 }
 
+export interface Visitor extends PublicUser {
+  visitedAt: string;
+}
+
 export const newsApi = {
   get: () => api.get<News>('/me/news'),
   markRead: () => api.post<{ ok: true }>('/me/news/read'),
+  visitors: () => api.get<Visitor[]>('/me/news/visitors'),
 };

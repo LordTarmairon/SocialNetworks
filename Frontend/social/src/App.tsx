@@ -7,6 +7,7 @@ import { FeedPage } from './pages/FeedPage';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { RegisterPage } from './pages/RegisterPage';
+import { VisitorsPage } from './pages/VisitorsPage';
 
 function Protected({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -52,6 +53,14 @@ function App() {
         element={
           <Protected>
             <EventsPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/visitas"
+        element={
+          <Protected>
+            <VisitorsPage />
           </Protected>
         }
       />

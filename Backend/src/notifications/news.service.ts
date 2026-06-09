@@ -18,6 +18,17 @@ export class NewsService {
     private readonly notifications: NotificationsService,
   ) {}
 
+  /** Lista completa de quién ha visitado tu perfil (más recientes primero). */
+  async listVisitors(meId: string) {
+    const views = await this.prisma.profileView.findMany({
+      where: { profileId: meId },
+      orderBy: { updatedAt: 'desc' },
+      take: 100,
+      include: { viewer: { select: publicUser } },
+    });
+    return views.map((v) => ({ ...v.viewer, visitedAt: v.updatedAt }));
+  }
+
   /** Panel de "Novedades" estilo Tuenti. */
   async getNews(meId: string) {
     const sinceJoins = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
