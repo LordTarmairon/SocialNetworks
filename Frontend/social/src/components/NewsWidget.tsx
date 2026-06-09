@@ -31,6 +31,20 @@ export function NewsWidget() {
     newsApi.get().then(setNews).catch(() => {});
   }, []);
 
+  async function markRead() {
+    if (!news) return;
+    try {
+      await newsApi.markRead();
+      setNews({
+        ...news,
+        unread: 0,
+        notifications: news.notifications.map((n) => ({ ...n, read: true })),
+      });
+    } catch {
+      /* ignore */
+    }
+  }
+
   if (!news) return null;
 
   return (
@@ -74,7 +88,14 @@ export function NewsWidget() {
       {/* Notificaciones */}
       {news.notifications.length > 0 && (
         <div className="news-section">
-          <h3 className="news-title">Novedades</h3>
+          <h3 className="news-title">
+            Novedades
+            {news.unread > 0 && (
+              <button className="news-markread" onClick={markRead}>
+                marcar leídas
+              </button>
+            )}
+          </h3>
           {news.notifications.map((n) => (
             <div key={n.id} className={`news-item ${n.read ? '' : 'unread'}`}>
               <Avatar

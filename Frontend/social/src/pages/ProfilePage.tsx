@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
+import { EditProfile } from '../components/EditProfile';
 import { PostCard } from '../components/PostCard';
 import { TopBar } from '../components/TopBar';
 import { errorMessage } from '../lib/errors';
@@ -22,6 +23,7 @@ export function ProfilePage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [wallLocked, setWallLocked] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     setProfile(null);
@@ -74,11 +76,30 @@ export function ProfilePage() {
                   <strong>{profile.friendCount}</strong> contactos
                 </span>
               </div>
-              <span className="profile-relation">
-                {relationLabel[profile.relation]}
-              </span>
+              {profile.relation === 'self' ? (
+                <button
+                  className="btn-green profile-edit-btn"
+                  onClick={() => setEditing(true)}
+                >
+                  Editar perfil
+                </button>
+              ) : (
+                <span className="profile-relation">
+                  {relationLabel[profile.relation]}
+                </span>
+              )}
             </div>
           </section>
+        )}
+
+        {editing && profile && (
+          <EditProfile
+            profile={profile}
+            onSaved={(p) =>
+              setProfile((prev) => (prev ? { ...prev, ...p } : prev))
+            }
+            onClose={() => setEditing(false)}
+          />
         )}
 
         <h2 className="wall-title">Muro</h2>

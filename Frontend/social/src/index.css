@@ -597,6 +597,99 @@ a {
   font-size: 0.9rem;
 }
 
+/* ---------- Editar perfil ---------- */
+.profile-edit-btn {
+  margin-top: 0.6rem;
+}
+.edit-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+.edit-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.edit-avatar {
+  display: flex;
+  justify-content: center;
+}
+.avatar-edit {
+  position: relative;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.avatar-edit-badge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  background: var(--green, #5a9e2f);
+  color: #fff;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  border: 2px solid var(--card);
+}
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.edit-field input,
+.edit-field textarea {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+}
+.edit-field input:focus,
+.edit-field textarea:focus {
+  border-color: var(--green, #5a9e2f);
+}
+.edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+/* Botón "marcar leídas" en el widget */
+.news-markread {
+  float: right;
+  background: none;
+  border: none;
+  color: var(--green, #5a9e2f);
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.news-markread:hover {
+  text-decoration: underline;
+}
+
 /* ---------- Widget de Novedades (verde, estilo Tuenti) ---------- */
 :root {
   --green: #5a9e2f;
