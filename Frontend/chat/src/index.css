@@ -199,3 +199,134 @@ body {
   font-size: 0.9rem;
   margin-top: 1.5rem;
 }
+
+.home-me {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* ---------- Avatar ---------- */
+.avatar {
+  border-radius: 50%;
+  background: var(--primary);
+  color: #04231b;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---------- Contactos ---------- */
+.contacts {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.contacts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contacts-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 0 0 0.25rem;
+}
+
+.contacts-search {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  color: var(--text);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.contacts-search:focus {
+  border-color: var(--primary);
+}
+
+.contacts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 0.5rem;
+  border-radius: 10px;
+}
+
+.contact-row:hover {
+  background: var(--surface);
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-name {
+  font-weight: 600;
+}
+
+.contact-username {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.contact-action {
+  background: var(--primary);
+  color: #04231b;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.contact-action:hover {
+  background: var(--primary-hover);
+}
+
+.contact-tag {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+}
+
+.contacts-empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 0.5rem;
+  list-style: none;
+}
