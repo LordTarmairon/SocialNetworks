@@ -1,0 +1,22 @@
+# Dependencias
+/node_modules
+
+# Compilado
+/dist
+/build
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+prisma-dev.log
+
+# Prisma (cliente generado)
+/src/generated
+
+# Sistema
+.DS_Store
+Thumbs.db
