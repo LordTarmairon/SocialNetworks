@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { getToken } from '../lib/api';
 import { newsApi, type News, type Notification } from '../lib/news';
+import { connectSocket } from '../lib/socket';
 import { Avatar } from './Avatar';
 
 function notifText(n: Notification): string {
@@ -27,9 +29,28 @@ export function NewsWidget() {
   const { user } = useAuth();
   const [news, setNews] = useState<News | null>(null);
 
-  useEffect(() => {
-    newsApi.get().then(setNews).catch(() => {});
+  const refresh = useCallback(() => {
+    newsApi
+      .get()
+      .then(setNews)
+      .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  // Tiempo real: cuando llega una novedad, refrescamos el panel.
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    const socket = connectSocket(token);
+    const onUpdate = () => refresh();
+    socket.on('news:update', onUpdate);
+    return () => {
+      socket.off('news:update', onUpdate);
+    };
+  }, [refresh]);
 
   async function markRead() {
     if (!news) return;
@@ -49,12 +70,18 @@ export function NewsWidget() {
 
   return (
     <aside className="news">
-      {/* Cabecera con visitas a tu perfil */}
+      {/* Cabecera: nombre + número de contactos */}
       <div className="news-head">
         <Avatar name={user?.displayName ?? '?'} src={user?.avatarUrl} size={48} />
-        <Link className="news-name" to={`/u/${user?.username}`}>
-          {user?.displayName}
-        </Link>
+        <div className="news-head-info">
+          <Link className="news-name" to={`/u/${user?.username}`}>
+            {user?.displayName}
+          </Link>
+          <Link className="news-followers" to="/contactos">
+            👥 <strong>{news.friendCount}</strong>{' '}
+            {news.friendCount === 1 ? 'contacto' : 'contactos'}
+          </Link>
+        </div>
       </div>
 
       <div className="news-visits">

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ChatGateway } from '../messages/chat.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 
 const actorSelect = {
@@ -18,7 +19,10 @@ export type NotificationType =
 
 @Injectable()
 export class NotificationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly chat: ChatGateway,
+  ) {}
 
   /** Crea una notificación (ignora si el actor es el propio destinatario). */
   async create(
@@ -31,6 +35,8 @@ export class NotificationsService {
     await this.prisma.notification.create({
       data: { userId, actorId, type, postId: postId ?? null },
     });
+    // Aviso en tiempo real para que el panel de Novedades se actualice solo.
+    this.chat.emitToUser(userId, 'news:update', { type });
   }
 
   async list(userId: string, limit = 15) {

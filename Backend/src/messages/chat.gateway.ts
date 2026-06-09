@@ -37,6 +37,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly prisma: PrismaService,
   ) {}
 
+  /** Emite un evento a todas las conexiones de un usuario (usado por otros módulos). */
+  emitToUser(userId: string, event: string, data: unknown) {
+    this.server.to(`user:${userId}`).emit(event, data);
+  }
+
   async handleConnection(client: Socket) {
     let userId: string;
     try {

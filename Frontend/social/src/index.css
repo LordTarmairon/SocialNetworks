@@ -715,12 +715,27 @@ a {
   gap: 0.7rem;
   align-items: center;
 }
+.news-head-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
 .news-name {
   font-weight: 700;
   color: var(--green-dark);
   font-size: 1.1rem;
 }
 .news-name:hover {
+  text-decoration: underline;
+}
+.news-followers {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.news-followers strong {
+  color: var(--green-dark);
+}
+.news-followers:hover {
   text-decoration: underline;
 }
 
