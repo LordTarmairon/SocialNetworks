@@ -1,7 +1,14 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react';
 import { Avatar } from '../components/Avatar';
 import { chatApi, type Conversation, type Message } from '../lib/chat';
 import { errorMessage } from '../lib/errors';
+import { mediaUrl, uploadImage } from '../lib/media';
 import { presenceText } from '../lib/presence';
 import { useSocket } from './SocketContext';
 
@@ -16,7 +23,9 @@ export function ConversationView({ conversation, meId }: Props) {
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [otherTyping, setOtherTyping] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const otherTypingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -114,6 +123,28 @@ export function ConversationView({ conversation, meId }: Props) {
     setText('');
   }
 
+  async function handleAttach(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !socket) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const url = await uploadImage(file);
+      // Enviamos la imagen, usando el texto actual como pie de foto (opcional).
+      socket.emit('message:send', {
+        conversationId: convId,
+        content: text.trim(),
+        attachmentUrl: url,
+      });
+      setText('');
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  }
+
   const other = conversation.otherUser;
   const statusText = otherTyping
     ? 'escribiendo…'
@@ -137,7 +168,17 @@ export function ConversationView({ conversation, meId }: Props) {
           const mine = m.senderId === meId;
           return (
             <div key={m.id} className={`bubble ${mine ? 'mine' : 'theirs'}`}>
-              <span className="bubble-text">{m.content}</span>
+              {m.attachmentUrl && (
+                <a
+                  href={mediaUrl(m.attachmentUrl)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bubble-image"
+                >
+                  <img src={mediaUrl(m.attachmentUrl)} alt="adjunto" />
+                </a>
+              )}
+              {m.content && <span className="bubble-text">{m.content}</span>}
               <span className="bubble-meta">
                 <span className="bubble-time">
                   {new Date(m.createdAt).toLocaleTimeString([], {
@@ -161,6 +202,22 @@ export function ConversationView({ conversation, meId }: Props) {
       </div>
 
       <form className="thread-input" onSubmit={handleSend}>
+        <button
+          type="button"
+          className="attach-btn"
+          title="Adjuntar imagen o GIF"
+          disabled={uploading}
+          onClick={() => fileRef.current?.click()}
+        >
+          {uploading ? '…' : '📎'}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={handleAttach}
+        />
         <input
           placeholder="Escribe un mensaje…"
           value={text}

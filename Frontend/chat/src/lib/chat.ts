@@ -19,6 +19,7 @@ export interface Message {
   conversationId: string;
   senderId: string;
   content: string;
+  attachmentUrl: string | null;
   createdAt: string;
   readAt: string | null;
 }

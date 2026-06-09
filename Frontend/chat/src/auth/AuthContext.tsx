@@ -26,6 +26,11 @@ interface AuthContextValue {
     showReadReceipts?: boolean;
     showLastSeen?: boolean;
   }) => Promise<void>;
+  updateProfile: (data: {
+    displayName?: string;
+    bio?: string;
+    avatarUrl?: string;
+  }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -61,6 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     updateSettings: async (settings) => {
       const updated = await usersApi.updateSettings(settings);
+      setUser((prev) => (prev ? { ...prev, ...updated } : prev));
+    },
+    updateProfile: async (data) => {
+      const updated = await usersApi.updateProfile(data);
       setUser((prev) => (prev ? { ...prev, ...updated } : prev));
     },
   };

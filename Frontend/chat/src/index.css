@@ -469,9 +469,24 @@ body {
   padding: 0.5rem 0.75rem;
   border-radius: 12px;
   display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
+  flex-direction: column;
+  gap: 0.3rem;
   word-break: break-word;
+}
+
+.bubble-image {
+  display: block;
+}
+
+.bubble-image img {
+  max-width: 240px;
+  max-height: 280px;
+  border-radius: 8px;
+  display: block;
+}
+
+.bubble-meta {
+  align-self: flex-end;
 }
 
 .bubble.mine {
@@ -584,4 +599,65 @@ body {
 .thread-input button:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.attach-btn {
+  background: var(--surface-2) !important;
+  color: var(--text) !important;
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0 !important;
+}
+
+/* ---------- Edición de perfil ---------- */
+.profile-edit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0 1rem;
+}
+
+.avatar-edit {
+  position: relative;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  background: var(--primary);
+  color: #04231b;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  border: 2px solid var(--surface);
+}
+
+.bio-input {
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.bio-input:focus {
+  border-color: var(--primary);
 }
