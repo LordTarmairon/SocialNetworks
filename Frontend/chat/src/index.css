@@ -446,9 +446,13 @@ body {
   font-weight: 600;
 }
 
-.thread-username {
+.thread-status {
   font-size: 0.8rem;
   color: var(--text-muted);
+}
+
+.thread-status.typing {
+  color: var(--primary);
 }
 
 .thread-messages {
@@ -486,9 +490,61 @@ body {
   white-space: pre-wrap;
 }
 
+.bubble-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+}
+
 .bubble-time {
   font-size: 0.65rem;
   color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.bubble-check {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: -2px;
+}
+
+.bubble-check.read {
+  color: #53bdeb;
+}
+
+/* ---------- Ajustes ---------- */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 0.25rem;
+  border-bottom: 1px solid var(--surface-2);
+  cursor: pointer;
+}
+
+.setting-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.setting-name {
+  font-weight: 600;
+}
+
+.setting-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  max-width: 42ch;
+}
+
+.setting-switch {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+  cursor: pointer;
   flex-shrink: 0;
 }
 

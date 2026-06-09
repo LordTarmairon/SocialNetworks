@@ -6,6 +6,8 @@ export interface User {
   username: string;
   displayName: string;
   avatarUrl?: string | null;
+  showReadReceipts: boolean;
+  showLastSeen: boolean;
 }
 
 interface AuthResponse {

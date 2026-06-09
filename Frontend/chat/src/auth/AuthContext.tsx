@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from 'react';
 import { getToken } from '../lib/api';
+import { usersApi } from '../lib/users';
 import {
   fetchMe,
   login as loginApi,
@@ -21,6 +22,10 @@ interface AuthContextValue {
   login: (identifier: string, password: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   logout: () => void;
+  updateSettings: (settings: {
+    showReadReceipts?: boolean;
+    showLastSeen?: boolean;
+  }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -53,6 +58,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout: () => {
       logoutApi();
       setUser(null);
+    },
+    updateSettings: async (settings) => {
+      const updated = await usersApi.updateSettings(settings);
+      setUser((prev) => (prev ? { ...prev, ...updated } : prev));
     },
   };
 

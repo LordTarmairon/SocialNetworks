@@ -1,10 +1,16 @@
 import { api } from './api';
 import type { PublicUser } from './friends';
 
+export interface Presence {
+  online: boolean;
+  lastSeenAt: string | null;
+}
+
 export interface Conversation {
   id: string;
   otherUser: PublicUser | null;
-  lastMessage: { content: string; createdAt: string } | null;
+  presence: Presence | null;
+  lastMessage: { content: string; createdAt: string; senderId: string } | null;
   updatedAt: string;
 }
 
@@ -14,6 +20,7 @@ export interface Message {
   senderId: string;
   content: string;
   createdAt: string;
+  readAt: string | null;
 }
 
 export const chatApi = {

@@ -7,6 +7,7 @@ import { ChatPage } from './pages/ChatPage';
 import { ContactsPage } from './pages/ContactsPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
+import { SettingsPage } from './pages/SettingsPage';
 
 /** Si ya hay sesión, no dejamos ver login/registro: redirige al inicio. */
 function PublicOnly({ children }: { children: ReactNode }) {
@@ -40,6 +41,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ContactsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
             </ProtectedRoute>
           }
         />

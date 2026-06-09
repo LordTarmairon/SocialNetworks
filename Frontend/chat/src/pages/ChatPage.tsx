@@ -22,9 +22,10 @@ export function ChatPage() {
     void load();
   }, [load]);
 
-  // Mantener la lista al día cuando llegan mensajes nuevos.
+  // Mantener la lista al día cuando llegan mensajes nuevos o cambia la presencia.
   useEffect(() => {
     if (!socket) return;
+
     const onNew = (msg: Message) => {
       setConversations((prev) => {
         const idx = prev.findIndex((c) => c.id === msg.conversationId);
@@ -35,16 +36,37 @@ export function ChatPage() {
         }
         const updated: Conversation = {
           ...prev[idx],
-          lastMessage: { content: msg.content, createdAt: msg.createdAt },
+          lastMessage: {
+            content: msg.content,
+            createdAt: msg.createdAt,
+            senderId: msg.senderId,
+          },
           updatedAt: msg.createdAt,
         };
         const rest = prev.filter((_, i) => i !== idx);
         return [updated, ...rest];
       });
     };
+
+    const onPresence = (e: {
+      userId: string;
+      online: boolean;
+      lastSeenAt: string | null;
+    }) => {
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.otherUser?.id === e.userId
+            ? { ...c, presence: { online: e.online, lastSeenAt: e.lastSeenAt } }
+            : c,
+        ),
+      );
+    };
+
     socket.on('message:new', onNew);
+    socket.on('presence', onPresence);
     return () => {
       socket.off('message:new', onNew);
+      socket.off('presence', onPresence);
     };
   }, [socket, load]);
 
@@ -61,6 +83,9 @@ export function ChatPage() {
           <div className="sidebar-actions">
             <Link className="sidebar-link" to="/contacts">
               Contactos
+            </Link>
+            <Link className="sidebar-link" to="/settings">
+              Ajustes
             </Link>
             <button className="home-logout" onClick={logout}>
               Salir
