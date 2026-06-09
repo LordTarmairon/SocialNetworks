@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 
 const publicUser = {
@@ -12,7 +13,20 @@ const STORY_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
 
 @Injectable()
 export class StoriesService {
+  private readonly logger = new Logger(StoriesService.name);
+
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Borra las stories caducadas cada hora. */
+  @Cron(CronExpression.EVERY_HOUR)
+  async cleanupExpired() {
+    const { count } = await this.prisma.story.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    });
+    if (count > 0) {
+      this.logger.log(`Limpieza de stories: ${count} caducadas eliminadas`);
+    }
+  }
 
   private async friendIds(userId: string): Promise<string[]> {
     const fs = await this.prisma.friendship.findMany({
