@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
+import { chatApi } from '../lib/chat';
 import { errorMessage } from '../lib/errors';
 import {
   friendsApi,
@@ -9,8 +11,9 @@ import {
   type SearchResult,
 } from '../lib/friends';
 
-export function HomePage() {
+export function ContactsPage() {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [friends, setFriends] = useState<PublicUser[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
@@ -36,7 +39,6 @@ export function HomePage() {
     void refresh();
   }, [refresh]);
 
-  // Búsqueda con debounce sencillo.
   useEffect(() => {
     const q = query.trim();
     if (!q) {
@@ -76,6 +78,15 @@ export function HomePage() {
     }
   }
 
+  async function handleChat(friendId: string) {
+    try {
+      const conv = await chatApi.startConversation(friendId);
+      navigate(`/c/${conv.id}`);
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  }
+
   function relationLabel(rel: SearchResult['relation']) {
     switch (rel) {
       case 'friends':
@@ -96,15 +107,19 @@ export function HomePage() {
           <Avatar name={user?.displayName ?? '?'} size={36} />
           <strong>{user?.displayName}</strong>
         </div>
-        <button className="home-logout" onClick={logout}>
-          Salir
-        </button>
+        <div className="sidebar-actions">
+          <Link className="sidebar-link" to="/">
+            Chats
+          </Link>
+          <button className="home-logout" onClick={logout}>
+            Salir
+          </button>
+        </div>
       </header>
 
       <main className="contacts">
         {error && <div className="auth-error">{error}</div>}
 
-        {/* Buscador */}
         <section className="contacts-section">
           <input
             className="contacts-search"
@@ -132,6 +147,13 @@ export function HomePage() {
                     >
                       Agregar
                     </button>
+                  ) : u.relation === 'friends' ? (
+                    <button
+                      className="contact-action"
+                      onClick={() => handleChat(u.id)}
+                    >
+                      Chatear
+                    </button>
                   ) : (
                     <span className="contact-tag">
                       {relationLabel(u.relation)}
@@ -143,12 +165,9 @@ export function HomePage() {
           )}
         </section>
 
-        {/* Solicitudes recibidas */}
         {requests.length > 0 && (
           <section className="contacts-section">
-            <h2 className="contacts-title">
-              Solicitudes ({requests.length})
-            </h2>
+            <h2 className="contacts-title">Solicitudes ({requests.length})</h2>
             <ul className="contacts-list">
               {requests.map((req) => (
                 <li key={req.requestId} className="contact-row">
@@ -176,7 +195,6 @@ export function HomePage() {
           </section>
         )}
 
-        {/* Amigos */}
         <section className="contacts-section">
           <h2 className="contacts-title">Contactos ({friends.length})</h2>
           {friends.length === 0 ? (
@@ -192,6 +210,12 @@ export function HomePage() {
                     <span className="contact-name">{f.displayName}</span>
                     <span className="contact-username">@{f.username}</span>
                   </div>
+                  <button
+                    className="contact-action"
+                    onClick={() => handleChat(f.id)}
+                  >
+                    Chatear
+                  </button>
                 </li>
               ))}
             </ul>

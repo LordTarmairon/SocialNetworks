@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
+import { SocketProvider } from './chat/SocketContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { HomePage } from './pages/HomePage';
+import { ChatPage } from './pages/ChatPage';
+import { ContactsPage } from './pages/ContactsPage';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 
@@ -15,33 +17,51 @@ function PublicOnly({ children }: { children: ReactNode }) {
 
 function App() {
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={
-          <PublicOnly>
-            <LoginPage />
-          </PublicOnly>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <PublicOnly>
-            <RegisterPage />
-          </PublicOnly>
-        }
-      />
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <HomePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <SocketProvider>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            <PublicOnly>
+              <LoginPage />
+            </PublicOnly>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicOnly>
+              <RegisterPage />
+            </PublicOnly>
+          }
+        />
+        <Route
+          path="/contacts"
+          element={
+            <ProtectedRoute>
+              <ContactsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/c/:id"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <ChatPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </SocketProvider>
   );
 }
 
