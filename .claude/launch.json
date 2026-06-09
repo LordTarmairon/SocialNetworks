@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "Frontend/chat"],
       "port": 5173
+    },
+    {
+      "name": "social",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "Frontend/social"],
+      "port": 5174
     }
   ]
 }
