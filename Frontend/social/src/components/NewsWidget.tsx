@@ -60,7 +60,7 @@ export function NewsWidget() {
 
       {/* Peticiones de amistad */}
       {news.friendRequests > 0 && (
-        <div className="news-item news-requests">
+        <Link className="news-item news-requests" to="/contactos">
           <span className="news-ico">👥</span>
           <span>
             <strong>{news.friendRequests}</strong>{' '}
@@ -68,7 +68,7 @@ export function NewsWidget() {
               ? 'petición de amistad'
               : 'peticiones de amistad'}
           </span>
-        </div>
+        </Link>
       )}
 
       {/* Notificaciones */}

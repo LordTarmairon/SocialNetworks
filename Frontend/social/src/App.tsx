@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
+import { ContactsPage } from './pages/ContactsPage';
 import { FeedPage } from './pages/FeedPage';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -35,6 +36,14 @@ function App() {
           <PublicOnly>
             <RegisterPage />
           </PublicOnly>
+        }
+      />
+      <Route
+        path="/contactos"
+        element={
+          <Protected>
+            <ContactsPage />
+          </Protected>
         }
       />
       <Route

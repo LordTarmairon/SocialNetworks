@@ -509,6 +509,94 @@ a {
   margin: 0.5rem 0 0;
 }
 
+/* ---------- Contactos ---------- */
+.card-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+}
+.section-title {
+  font-size: 1rem;
+  margin: 0 0 0.75rem;
+  color: var(--text);
+}
+.contacts-search {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  font-size: 1rem;
+  outline: none;
+}
+.contacts-search:focus {
+  border-color: var(--blue);
+}
+.people-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.person-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 0.3rem;
+  border-radius: 8px;
+}
+.person-row:hover {
+  background: var(--bg);
+}
+.person-info {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+  flex: 1;
+}
+.person-name {
+  display: block;
+  font-weight: 600;
+}
+.person-username {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.row-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+.btn-green {
+  background: var(--green, #5a9e2f);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-green:hover {
+  background: var(--green-dark, #487f24);
+}
+.btn-ghost {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
 /* ---------- Widget de Novedades (verde, estilo Tuenti) ---------- */
 :root {
   --green: #5a9e2f;
