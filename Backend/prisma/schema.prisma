@@ -53,6 +53,10 @@ model User {
   notifications Notification[] @relation("NotificationsReceived")
   actions       Notification[] @relation("NotificationsActed")
 
+  // Eventos.
+  eventsHosted Event[]      @relation("EventsHosted")
+  attendances  Attendance[] @relation("Attendances")
+
   @@map("users")
 }
 
@@ -216,4 +220,38 @@ model Notification {
 
   @@index([userId, createdAt])
   @@map("notifications")
+}
+
+// ---------------------------------------------------------------------------
+// Eventos (estilo Tuenti): un anfitrión crea un evento y la gente confirma.
+// ---------------------------------------------------------------------------
+model Event {
+  id          String   @id @default(uuid())
+  hostId      String
+  title       String
+  description String?
+  location    String?
+  imageUrl    String?
+  startsAt    DateTime
+  createdAt   DateTime @default(now())
+
+  host        User         @relation("EventsHosted", fields: [hostId], references: [id], onDelete: Cascade)
+  attendances Attendance[]
+
+  @@index([startsAt])
+  @@map("events")
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  eventId   String
+  userId    String
+  status    String   @default("going") // going | maybe | declined
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation("Attendances", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@map("attendances")
 }

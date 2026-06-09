@@ -5,6 +5,7 @@ import { join } from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
+import { EventsModule } from './events/events.module';
 import { FriendsModule } from './friends/friends.module';
 import { MessagesModule } from './messages/messages.module';
 import { NotificationsModule } from './notifications/notifications.module';
@@ -29,6 +30,7 @@ import { UsersModule } from './users/users.module';
     UploadsModule,
     SocialModule,
     NotificationsModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
