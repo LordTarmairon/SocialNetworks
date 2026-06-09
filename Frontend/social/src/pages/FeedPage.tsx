@@ -74,6 +74,7 @@ export function FeedPage() {
     <>
       <TopBar />
       <div className="page">
+        <NewsWidget />
         <main className="feed">
           <StoriesBar groups={stories} onChanged={loadStories} />
 
@@ -136,7 +137,6 @@ export function FeedPage() {
           ))
         )}
         </main>
-        <NewsWidget />
       </div>
     </>
   );

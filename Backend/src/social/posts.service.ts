@@ -99,7 +99,29 @@ export class PostsService {
       data: { authorId: meId, content, imageUrl: data.imageUrl ?? null },
       include: this.postInclude(meId),
     });
+    await this.notifyMentions(content, meId, post.id);
     return this.format(post as RawPost);
+  }
+
+  /** Detecta @usuario en el texto y notifica a los etiquetados. */
+  private async notifyMentions(
+    content: string,
+    authorId: string,
+    postId: string,
+  ) {
+    const usernames = [
+      ...new Set(
+        (content.match(/@([a-zA-Z0-9_]+)/g) ?? []).map((m) => m.slice(1)),
+      ),
+    ];
+    if (usernames.length === 0) return;
+    const users = await this.prisma.user.findMany({
+      where: { username: { in: usernames } },
+      select: { id: true },
+    });
+    for (const u of users) {
+      await this.notifications.create(u.id, authorId, 'mention', postId);
+    }
   }
 
   /** Feed: publicaciones propias y de los amigos. */
@@ -184,6 +206,7 @@ export class PostsService {
       include: { author: { select: publicUser } },
     });
     await this.notifications.create(post.authorId, meId, 'comment', postId);
+    await this.notifyMentions(content, meId, postId);
     return {
       id: comment.id,
       content: comment.content,

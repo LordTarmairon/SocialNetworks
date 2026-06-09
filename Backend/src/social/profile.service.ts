@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 export type Relation =
@@ -10,7 +11,10 @@ export type Relation =
 
 @Injectable()
 export class ProfileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   async getProfile(meId: string, username: string) {
     const user = await this.prisma.user.findUnique({
@@ -28,11 +32,19 @@ export class ProfileService {
 
     // Registrar la visita (una fila por visitante, actualiza la fecha).
     if (meId !== user.id) {
+      const existing = await this.prisma.profileView.findUnique({
+        where: { viewerId_profileId: { viewerId: meId, profileId: user.id } },
+        select: { id: true },
+      });
       await this.prisma.profileView.upsert({
         where: { viewerId_profileId: { viewerId: meId, profileId: user.id } },
         create: { viewerId: meId, profileId: user.id },
         update: { updatedAt: new Date() },
       });
+      // La primera vez que alguien te visita, te avisamos.
+      if (!existing) {
+        await this.notifications.create(user.id, meId, 'profile_view');
+      }
     }
 
     const [postCount, friendCount, friendship] = await Promise.all([

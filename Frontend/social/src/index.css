@@ -197,7 +197,7 @@ a {
 }
 @media (max-width: 960px) {
   .page {
-    flex-direction: column-reverse;
+    flex-direction: column;
   }
   .news {
     width: 100% !important;
@@ -509,12 +509,18 @@ a {
   margin: 0.5rem 0 0;
 }
 
-/* ---------- Widget de Novedades ---------- */
+/* ---------- Widget de Novedades (verde, estilo Tuenti) ---------- */
+:root {
+  --green: #5a9e2f;
+  --green-dark: #487f24;
+  --green-light: #eef6e6;
+}
 .news {
-  width: 280px;
+  width: 290px;
   flex-shrink: 0;
   background: var(--card);
   border: 1px solid var(--border);
+  border-top: 3px solid var(--green);
   border-radius: 12px;
   padding: 1rem;
   position: sticky;
@@ -527,22 +533,36 @@ a {
   display: flex;
   gap: 0.7rem;
   align-items: center;
-  padding-bottom: 0.85rem;
-  border-bottom: 1px solid var(--border);
 }
 .news-name {
   font-weight: 700;
-  color: var(--blue);
-  font-size: 1.05rem;
+  color: var(--green-dark);
+  font-size: 1.1rem;
 }
 .news-name:hover {
   text-decoration: underline;
 }
+
+/* Visitas a tu perfil — destacado */
 .news-visits {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  margin-top: 0.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--green-light);
+  border: 1px solid #d6e8c4;
+  border-radius: 10px;
+  padding: 0.6rem 0.8rem;
+  color: var(--green-dark);
+  font-size: 0.88rem;
+  font-weight: 600;
 }
+.news-visits-num {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--green);
+  line-height: 1;
+}
+
 .news-milestone {
   background: #fff6e0;
   border: 1px solid #f5d98a;
@@ -560,8 +580,11 @@ a {
   font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--text-muted);
+  color: var(--green-dark);
+  font-weight: 700;
   margin: 0.25rem 0 0;
+  border-top: 1px solid var(--border);
+  padding-top: 0.6rem;
 }
 .news-item {
   display: flex;
@@ -571,8 +594,8 @@ a {
   color: var(--text);
 }
 .news-requests {
-  color: #2e7d32;
-  font-weight: 600;
+  color: var(--green-dark);
+  font-weight: 700;
 }
 .news-ico {
   width: 28px;
@@ -584,13 +607,13 @@ a {
 }
 .news-link {
   font-weight: 600;
-  color: var(--blue);
+  color: var(--green-dark);
 }
 .news-link:hover {
   text-decoration: underline;
 }
 .news-item.unread {
-  background: var(--blue-light);
+  background: var(--green-light);
   border-radius: 8px;
   padding: 0.3rem 0.4rem;
   margin: 0 -0.4rem;

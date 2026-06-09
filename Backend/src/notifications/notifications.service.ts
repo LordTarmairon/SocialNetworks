@@ -12,7 +12,9 @@ export type NotificationType =
   | 'like'
   | 'comment'
   | 'friend_request'
-  | 'friend_accept';
+  | 'friend_accept'
+  | 'mention'
+  | 'profile_view';
 
 @Injectable()
 export class NotificationsService {

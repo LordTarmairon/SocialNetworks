@@ -14,6 +14,10 @@ function notifText(n: Notification): string {
       return 'te ha enviado una solicitud';
     case 'friend_accept':
       return 'ya es tu contacto';
+    case 'mention':
+      return 'te ha etiquetado en una publicación';
+    case 'profile_view':
+      return 'ha visto tu perfil';
     default:
       return '';
   }
@@ -34,15 +38,17 @@ export function NewsWidget() {
       {/* Cabecera con visitas a tu perfil */}
       <div className="news-head">
         <Avatar name={user?.displayName ?? '?'} src={user?.avatarUrl} size={48} />
-        <div>
-          <Link className="news-name" to={`/u/${user?.username}`}>
-            {user?.displayName}
-          </Link>
-          <div className="news-visits">
-            📊 <strong>{news.profileVisits}</strong>{' '}
-            {news.profileVisits === 1 ? 'visita' : 'visitas'} a tu perfil
-          </div>
-        </div>
+        <Link className="news-name" to={`/u/${user?.username}`}>
+          {user?.displayName}
+        </Link>
+      </div>
+
+      <div className="news-visits">
+        <span className="news-visits-num">{news.profileVisits}</span>
+        <span>
+          {news.profileVisits === 1 ? 'persona ha' : 'personas han'} visto tu
+          perfil
+        </span>
       </div>
 
       {/* Logro de número de contactos */}

@@ -1,9 +1,17 @@
 import { api } from './api';
 import type { PublicUser } from './social';
 
+export type NotificationType =
+  | 'like'
+  | 'comment'
+  | 'friend_request'
+  | 'friend_accept'
+  | 'mention'
+  | 'profile_view';
+
 export interface Notification {
   id: string;
-  type: 'like' | 'comment' | 'friend_request' | 'friend_accept';
+  type: NotificationType;
   actor: PublicUser;
   postId: string | null;
   read: boolean;
