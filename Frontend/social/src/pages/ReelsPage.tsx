@@ -21,7 +21,6 @@ export function ReelsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
     try {
       setReels(await socialApi.reels());
     } finally {

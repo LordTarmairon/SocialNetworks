@@ -42,11 +42,15 @@ la de mensajería (estilo WhatsApp) y la red social (estilo Tuenti).
 
 ## Endpoints actuales
 
-| Método | Ruta                 | Descripción                          |
-| ------ | -------------------- | ------------------------------------ |
-| POST   | `/api/auth/register` | Registro de usuario                  |
-| POST   | `/api/auth/login`    | Login (con email o username)         |
-| GET    | `/api/auth/me`       | Datos del usuario autenticado (JWT)  |
+| Método | Ruta                 | Descripción                                               |
+| ------ | -------------------- | --------------------------------------------------------- |
+| POST   | `/api/auth/register` | Registro con **email** (Mellon) o **teléfono** (Palantír) |
+| POST   | `/api/auth/login`    | Login con email, usuario o teléfono                       |
+| GET    | `/api/auth/me`       | Datos del usuario autenticado (JWT)                       |
+
+Además expone el resto de módulos: mensajería y grupos (REST + WebSocket),
+publicaciones y reels, fotos y álbumes, historias, amigos/seguidores, eventos,
+notificaciones y subidas (`/api/uploads/image`, `/audio`, `/video`).
 
 ## Notas de Prisma 7
 

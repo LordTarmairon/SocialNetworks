@@ -1,73 +1,45 @@
-# React + TypeScript + Vite
+# Palantír — Chat (Frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Cliente de mensajería estilo WhatsApp/Messenger. Forma parte del monorepo
+[SocialNetwork](../../README.md) y consume la API compartida (`Backend/`).
 
-Currently, two official plugins are available:
+> _Palantír_: la «piedra vidente» de Tolkien que permite comunicarse a distancia.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack
 
-## React Compiler
+- React + Vite + TypeScript
+- React Router
+- socket.io-client (mensajería en tiempo real)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Funcionalidades
 
-## Expanding the ESLint configuration
+- **Alta y acceso por número de teléfono** (o por usuario).
+- Chats 1‑a‑1 y **grupos** (crear, renombrar, añadir miembros, salir).
+- **Editar y borrar** mensajes, **reenviar**, **reacciones** y notas de voz.
+- Recibos de lectura y «última conexión» configurables en Ajustes.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Desarrollo
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+cp .env.example .env     # apunta a la API (http://localhost:3000)
+npm run dev              # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Requiere el backend en marcha (ver [`Backend/README.md`](../../Backend/README.md)).
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+| Script            | Acción                          |
+| ----------------- | ------------------------------- |
+| `npm run dev`     | Servidor de desarrollo (HMR)    |
+| `npm run build`   | Build de producción             |
+| `npm run preview` | Sirve el build de producción    |
+| `npm run lint`    | ESLint                          |
+
+## Variables de entorno
+
+| Variable         | Descripción                       | Por defecto                  |
+| ---------------- | --------------------------------- | ---------------------------- |
+| `VITE_API_URL`   | URL base de la API REST           | `http://localhost:3000/api`  |
+| `VITE_WS_URL`    | URL del servidor de WebSockets    | `http://localhost:3000`      |
