@@ -88,14 +88,16 @@ export function NewsWidget() {
         </div>
       </div>
 
-      <Link className="news-visits" to="/visitas">
-        <span className="news-visits-num">{news.profileVisits}</span>
-        <span className="news-visits-text">
-          {news.profileVisits === 1 ? 'persona ha' : 'personas han'} visto tu
-          perfil
-        </span>
-        <span className="news-visits-arrow">›</span>
-      </Link>
+      {news.profileVisits > 0 && (
+        <Link className="news-visits" to="/visitas">
+          <span className="news-visits-num">{news.profileVisits}</span>
+          <span className="news-visits-text">
+            {news.profileVisits === 1 ? 'persona ha' : 'personas han'} visto tu
+            perfil
+          </span>
+          <span className="news-visits-arrow">›</span>
+        </Link>
+      )}
 
       {/* Logro de número de contactos */}
       {news.milestone && (
