@@ -10,6 +10,7 @@ import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { RegisterPage } from './pages/RegisterPage';
 import { SavedPage } from './pages/SavedPage';
+import { SearchPage } from './pages/SearchPage';
 import { VisitorsPage } from './pages/VisitorsPage';
 
 function Protected({ children }: { children: ReactNode }) {
@@ -72,6 +73,14 @@ function App() {
         element={
           <Protected>
             <SavedPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/buscar"
+        element={
+          <Protected>
+            <SearchPage />
           </Protected>
         }
       />

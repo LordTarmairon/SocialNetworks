@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -22,6 +23,11 @@ export class PostsController {
   @Get('feed')
   feed(@CurrentUser() me: AuthUser) {
     return this.posts.feed(me.id);
+  }
+
+  @Get('search/posts')
+  searchPosts(@CurrentUser() me: AuthUser, @Query('q') q = '') {
+    return this.posts.searchPosts(me.id, q);
   }
 
   @Post('posts')

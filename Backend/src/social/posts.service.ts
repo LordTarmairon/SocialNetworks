@@ -254,6 +254,27 @@ export class PostsService {
     return posts.map((p) => this.format(p as RawPost, meId));
   }
 
+  /** Busca publicaciones por texto/hashtag entre las visibles para el usuario. */
+  async searchPosts(meId: string, query: string) {
+    const q = query.trim();
+    if (!q) return [];
+    const friendIds = await this.friendIds(meId);
+    const posts = await this.prisma.post.findMany({
+      where: {
+        content: { contains: q, mode: 'insensitive' },
+        OR: [
+          { authorId: meId },
+          { authorId: { in: friendIds }, visibility: { not: 'private' } },
+          { visibility: 'public' },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
+      include: this.postInclude(meId),
+    });
+    return posts.map((p) => this.format(p as RawPost, meId));
+  }
+
   /** Muro de un usuario, respetando la visibilidad de cada publicación. */
   async wall(meId: string, username: string) {
     const user = await this.prisma.user.findUnique({

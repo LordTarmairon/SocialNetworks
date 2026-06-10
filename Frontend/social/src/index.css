@@ -151,6 +151,31 @@ a {
   font-weight: 700;
   letter-spacing: -0.5px;
 }
+.topbar-search {
+  flex: 1;
+  max-width: 320px;
+  margin: 0 1rem;
+}
+.topbar-search input {
+  width: 100%;
+  border: none;
+  border-radius: 16px;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  outline: none;
+}
+.topbar-search input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+.hashtag {
+  color: var(--blue);
+  font-weight: 600;
+}
+.hashtag:hover {
+  text-decoration: underline;
+}
 .topbar-nav {
   display: flex;
   align-items: center;

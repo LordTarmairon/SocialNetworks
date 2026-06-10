@@ -79,6 +79,8 @@ export interface StoryGroup {
 export const socialApi = {
   feed: () => api.get<Post[]>('/feed'),
   saved: () => api.get<Post[]>('/me/saved'),
+  searchPosts: (q: string) =>
+    api.get<Post[]>(`/search/posts?q=${encodeURIComponent(q)}`),
   createPost: (
     content: string,
     imageUrl?: string,
