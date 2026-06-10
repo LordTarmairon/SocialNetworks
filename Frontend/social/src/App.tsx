@@ -8,6 +8,7 @@ import { EventsPage } from './pages/EventsPage';
 import { FeedPage } from './pages/FeedPage';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { ReelsPage } from './pages/ReelsPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { SavedPage } from './pages/SavedPage';
 import { SearchPage } from './pages/SearchPage';
@@ -65,6 +66,14 @@ function App() {
         element={
           <Protected>
             <VisitorsPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/reels"
+        element={
+          <Protected>
+            <ReelsPage />
           </Protected>
         }
       />

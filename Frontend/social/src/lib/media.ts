@@ -9,9 +9,17 @@ export function mediaUrl(path?: string | null): string | undefined {
 }
 
 export async function uploadImage(file: File): Promise<string> {
+  return uploadTo('image', file);
+}
+
+export async function uploadVideo(file: File): Promise<string> {
+  return uploadTo('video', file);
+}
+
+async function uploadTo(kind: 'image' | 'video', file: File): Promise<string> {
   const form = new FormData();
   form.append('file', file);
-  const res = await fetch(`${ORIGIN}/api/uploads/image`, {
+  const res = await fetch(`${ORIGIN}/api/uploads/${kind}`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${getToken()}` },
     body: form,

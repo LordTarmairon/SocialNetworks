@@ -25,6 +25,11 @@ export class PostsController {
     return this.posts.feed(me.id);
   }
 
+  @Get('reels')
+  reels(@CurrentUser() me: AuthUser) {
+    return this.posts.reels(me.id);
+  }
+
   @Get('search/posts')
   searchPosts(@CurrentUser() me: AuthUser, @Query('q') q = '') {
     return this.posts.searchPosts(me.id, q);

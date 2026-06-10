@@ -12,6 +12,11 @@ export class CreatePostDto {
   imageUrl?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  videoUrl?: string;
+
+  @IsOptional()
   @IsIn(['public', 'friends', 'private'])
   visibility?: string;
 

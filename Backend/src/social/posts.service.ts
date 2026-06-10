@@ -44,6 +44,7 @@ type RawPost = {
   authorId: string;
   content: string;
   imageUrl: string | null;
+  videoUrl: string | null;
   visibility: string;
   createdAt: Date;
   author: Author;
@@ -113,6 +114,7 @@ export class PostsService {
       id: p.id,
       content: p.content,
       imageUrl: p.imageUrl,
+      videoUrl: p.videoUrl,
       visibility: p.visibility,
       createdAt: p.createdAt,
       author: p.author,
@@ -157,12 +159,13 @@ export class PostsService {
     data: {
       content?: string;
       imageUrl?: string;
+      videoUrl?: string;
       visibility?: string;
       sharedPostId?: string;
     },
   ) {
     const content = (data.content ?? '').trim();
-    if (!content && !data.imageUrl && !data.sharedPostId) {
+    if (!content && !data.imageUrl && !data.videoUrl && !data.sharedPostId) {
       throw new BadRequestException('La publicación está vacía');
     }
     const visibility = ['public', 'friends', 'private'].includes(
@@ -188,6 +191,7 @@ export class PostsService {
         authorId: meId,
         content,
         imageUrl: data.imageUrl ?? null,
+        videoUrl: data.videoUrl ?? null,
         visibility,
         sharedPostId,
       },
@@ -270,6 +274,35 @@ export class PostsService {
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
+      include: this.postInclude(meId),
+    });
+    return posts.map((p) => this.format(p as RawPost, meId));
+  }
+
+  /** Reels: publicaciones con vídeo visibles para el usuario (más recientes). */
+  async reels(meId: string) {
+    const friends = await this.friendIds(meId);
+    const blocked = await this.blockedIds(meId);
+    const following = (
+      await this.prisma.follow.findMany({
+        where: { followerId: meId },
+        select: { followingId: true },
+      })
+    ).map((f) => f.followingId);
+
+    const posts = await this.prisma.post.findMany({
+      where: {
+        videoUrl: { not: null },
+        authorId: { notIn: blocked },
+        OR: [
+          { authorId: meId },
+          { authorId: { in: friends }, visibility: { not: 'private' } },
+          { authorId: { in: following }, visibility: 'public' },
+          { visibility: 'public' },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 30,
       include: this.postInclude(meId),
     });
     return posts.map((p) => this.format(p as RawPost, meId));

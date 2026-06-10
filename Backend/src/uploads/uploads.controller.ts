@@ -28,6 +28,7 @@ const ALLOWED_AUDIO = [
   'audio/wav',
   'audio/x-wav',
 ];
+const ALLOWED_VIDEO = ['video/mp4', 'video/webm', 'video/quicktime', 'video/ogg'];
 
 const storage = diskStorage({
   destination: UPLOADS_DIR,
@@ -72,6 +73,26 @@ export class UploadsController {
     }),
   )
   uploadAudio(@UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('No se recibió ningún archivo');
+    return { url: `/uploads/${file.filename}` };
+  }
+
+  @Post('video')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage,
+      limits: { fileSize: 60 * 1024 * 1024 }, // 60 MB
+      fileFilter: (_req, file, cb) => {
+        if (ALLOWED_VIDEO.includes(file.mimetype)) cb(null, true);
+        else
+          cb(
+            new BadRequestException('Tipo de vídeo no permitido (MP4 o WEBM)'),
+            false,
+          );
+      },
+    }),
+  )
+  uploadVideo(@UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('No se recibió ningún archivo');
     return { url: `/uploads/${file.filename}` };
   }

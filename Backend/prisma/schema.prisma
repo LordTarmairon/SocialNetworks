@@ -215,6 +215,7 @@ model Post {
   authorId     String
   content      String
   imageUrl     String?
+  videoUrl     String? // si es un reel (vídeo corto)
   visibility   String   @default("friends") // public | friends | private
   sharedPostId String? // si es una publicación compartida
   createdAt    DateTime @default(now())

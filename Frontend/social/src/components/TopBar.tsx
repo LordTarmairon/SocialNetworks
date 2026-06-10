@@ -87,6 +87,7 @@ export function TopBar() {
       </div>
       <nav className="topbar-nav">
         <Link to="/">Inicio</Link>
+        <Link to="/reels">Reels</Link>
         <Link to="/contactos">Contactos</Link>
         <Link to="/eventos">Eventos</Link>
         <Link to="/albumes">Fotos</Link>

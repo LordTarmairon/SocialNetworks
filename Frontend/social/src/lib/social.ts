@@ -23,6 +23,7 @@ export interface Post {
   id: string;
   content: string;
   imageUrl: string | null;
+  videoUrl: string | null;
   visibility: Visibility;
   createdAt: string;
   author: PublicUser;
@@ -91,6 +92,7 @@ export interface StoryGroup {
 
 export const socialApi = {
   feed: () => api.get<Post[]>('/feed'),
+  reels: () => api.get<Post[]>('/reels'),
   saved: () => api.get<Post[]>('/me/saved'),
   searchPosts: (q: string) =>
     api.get<Post[]>(`/search/posts?q=${encodeURIComponent(q)}`),
@@ -104,6 +106,8 @@ export const socialApi = {
     visibility?: Visibility,
     sharedPostId?: string,
   ) => api.post<Post>('/posts', { content, imageUrl, visibility, sharedPostId }),
+  createReel: (videoUrl: string, content: string) =>
+    api.post<Post>('/posts', { videoUrl, content, visibility: 'public' }),
   deletePost: (id: string) => api.del<{ ok: true }>(`/posts/${id}`),
   react: (id: string, type: ReactionType) =>
     api.post<{ ok: true }>(`/posts/${id}/react`, { type }),
