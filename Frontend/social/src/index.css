@@ -661,6 +661,254 @@ a {
   color: var(--text-muted);
   font-size: 0.9rem;
 }
+.mention {
+  color: var(--blue);
+  font-weight: 600;
+}
+.mention:hover {
+  text-decoration: underline;
+}
+.link-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  margin-left: 0.3rem;
+}
+.btn-green.active {
+  background: var(--green-dark, #487f24);
+}
+.profile-links {
+  margin: 0.25rem 0 0.5rem;
+}
+
+/* ---------- Álbumes ---------- */
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 0.85rem;
+}
+.album-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.album-cover {
+  aspect-ratio: 1;
+  background: var(--bg);
+  display: grid;
+  place-items: center;
+}
+.album-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.album-empty {
+  font-size: 2.5rem;
+  opacity: 0.4;
+}
+.album-info {
+  padding: 0.6rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.album-title {
+  font-weight: 600;
+}
+
+/* ---------- Rejilla de fotos ---------- */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 0.4rem;
+}
+.photo-thumb {
+  position: relative;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg);
+}
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.photo-thumb-tags {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.72rem;
+  padding: 1px 5px;
+  border-radius: 8px;
+}
+
+/* ---------- Visor de foto ---------- */
+.photo-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+.photo-modal {
+  position: relative;
+  display: flex;
+  gap: 0;
+  max-width: 960px;
+  width: 100%;
+  max-height: 90vh;
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.photo-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+.photo-stage {
+  flex: 1;
+  background: #000;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+}
+.photo-img-wrap {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+.photo-img-wrap.tagging {
+  cursor: crosshair;
+}
+.photo-img-wrap img {
+  max-width: 100%;
+  max-height: 90vh;
+  display: block;
+}
+.tag-marker {
+  position: absolute;
+  transform: translate(-50%, -50%);
+}
+.tag-dot {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+.tag-label {
+  position: absolute;
+  top: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.78);
+  color: #fff;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  padding: 2px 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tag-remove {
+  background: none;
+  border: none;
+  color: #ff9c9c;
+  cursor: pointer;
+  font-size: 0.7rem;
+}
+.tag-picker {
+  position: absolute;
+  transform: translate(-50%, 8px);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.4rem;
+  width: 200px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  z-index: 6;
+}
+.tag-picker input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.4rem;
+  outline: none;
+}
+.tag-picker ul {
+  list-style: none;
+  margin: 0.3rem 0 0;
+  padding: 0;
+}
+.tag-picker li {
+  padding: 0.35rem 0.4rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.tag-picker li:hover {
+  background: var(--blue-light);
+}
+.photo-side {
+  width: 280px;
+  flex-shrink: 0;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  overflow-y: auto;
+}
+.photo-owner {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.photo-caption {
+  margin: 0;
+  line-height: 1.4;
+}
+.caption-edit textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  font-family: inherit;
+  resize: vertical;
+}
+.photo-tags-list {
+  font-size: 0.88rem;
+  color: var(--text);
+}
+@media (max-width: 700px) {
+  .photo-modal {
+    flex-direction: column;
+  }
+  .photo-side {
+    width: 100%;
+  }
+}
 
 /* ---------- Editar perfil ---------- */
 .profile-edit-btn {

@@ -10,6 +10,7 @@ import { EventsModule } from './events/events.module';
 import { FriendsModule } from './friends/friends.module';
 import { MessagesModule } from './messages/messages.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { PhotosModule } from './photos/photos.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { SocialModule } from './social/social.module';
 import { UploadsModule } from './uploads/uploads.module';
@@ -33,6 +34,7 @@ import { UsersModule } from './users/users.module';
     SocialModule,
     NotificationsModule,
     EventsModule,
+    PhotosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

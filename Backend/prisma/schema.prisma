@@ -58,6 +58,11 @@ model User {
   eventsHosted Event[]      @relation("EventsHosted")
   attendances  Attendance[] @relation("Attendances")
 
+  // Fotos y álbumes.
+  albums    Album[]    @relation("AlbumsOwned")
+  photos    Photo[]    @relation("PhotosOwned")
+  photoTags PhotoTag[] @relation("PhotoTags")
+
   @@map("users")
 }
 
@@ -277,4 +282,55 @@ model Attendance {
 
   @@unique([eventId, userId])
   @@map("attendances")
+}
+
+// ===========================================================================
+// Fotos, álbumes y etiquetas (estilo Facebook).
+// ===========================================================================
+model Album {
+  id          String   @id @default(uuid())
+  ownerId     String
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+
+  owner  User    @relation("AlbumsOwned", fields: [ownerId], references: [id], onDelete: Cascade)
+  photos Photo[]
+
+  @@index([ownerId])
+  @@map("albums")
+}
+
+model Photo {
+  id        String   @id @default(uuid())
+  albumId   String?
+  ownerId   String
+  url       String
+  caption   String?
+  createdAt DateTime @default(now())
+
+  album Album?     @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  owner User       @relation("PhotosOwned", fields: [ownerId], references: [id], onDelete: Cascade)
+  tags  PhotoTag[]
+
+  @@index([albumId])
+  @@map("photos")
+}
+
+// Etiqueta de una persona en una foto, con su posición (x,y en %).
+model PhotoTag {
+  id        String   @id @default(uuid())
+  photoId   String
+  userId    String // persona etiquetada
+  taggerId  String // quién etiquetó
+  x         Float? // 0-100
+  y         Float? // 0-100
+  createdAt DateTime @default(now())
+
+  photo Photo @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  user  User  @relation("PhotoTags", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([photoId, userId])
+  @@index([photoId])
+  @@map("photo_tags")
 }

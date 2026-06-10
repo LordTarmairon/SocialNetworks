@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
+import { AlbumPage } from './pages/AlbumPage';
+import { AlbumsPage } from './pages/AlbumsPage';
 import { ContactsPage } from './pages/ContactsPage';
 import { EventsPage } from './pages/EventsPage';
 import { FeedPage } from './pages/FeedPage';
@@ -61,6 +63,30 @@ function App() {
         element={
           <Protected>
             <VisitorsPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/albumes"
+        element={
+          <Protected>
+            <AlbumsPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/albumes/:username"
+        element={
+          <Protected>
+            <AlbumsPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/album/:id"
+        element={
+          <Protected>
+            <AlbumPage />
           </Protected>
         }
       />

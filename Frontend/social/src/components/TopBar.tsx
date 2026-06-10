@@ -13,6 +13,7 @@ export function TopBar() {
         <Link to="/">Inicio</Link>
         <Link to="/contactos">Contactos</Link>
         <Link to="/eventos">Eventos</Link>
+        <Link to="/albumes">Fotos</Link>
         {user && (
           <Link to={`/u/${user.username}`} className="topbar-me">
             <Avatar name={user.displayName} src={user.avatarUrl} size={30} />

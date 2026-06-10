@@ -18,6 +18,8 @@ function notifText(n: Notification): string {
       return 'ya es tu contacto';
     case 'mention':
       return 'te ha etiquetado en una publicación';
+    case 'photo_tag':
+      return 'te ha etiquetado en una foto';
     case 'profile_view':
       return 'ha visto tu perfil';
     default:

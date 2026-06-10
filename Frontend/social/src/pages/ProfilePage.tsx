@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
 import { EditProfile } from '../components/EditProfile';
@@ -101,6 +101,12 @@ export function ProfilePage() {
             onClose={() => setEditing(false)}
           />
         )}
+
+        <div className="profile-links">
+          <Link className="news-link" to={`/albumes/${username}`}>
+            📷 Ver álbumes
+          </Link>
+        </div>
 
         <h2 className="wall-title">Muro</h2>
         {wallLocked ? (

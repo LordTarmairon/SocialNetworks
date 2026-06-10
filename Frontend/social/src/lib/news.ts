@@ -7,6 +7,7 @@ export type NotificationType =
   | 'friend_request'
   | 'friend_accept'
   | 'mention'
+  | 'photo_tag'
   | 'profile_view';
 
 export interface Notification {
