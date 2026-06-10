@@ -24,6 +24,21 @@ export const REACTION_TYPES = [
 ] as const;
 export type ReactionType = (typeof REACTION_TYPES)[number];
 
+type Author = {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+};
+
+type RawShared = {
+  id: string;
+  content: string;
+  imageUrl: string | null;
+  createdAt: Date;
+  author: Author;
+} | null;
+
 type RawPost = {
   id: string;
   authorId: string;
@@ -31,14 +46,11 @@ type RawPost = {
   imageUrl: string | null;
   visibility: string;
   createdAt: Date;
-  author: {
-    id: string;
-    username: string;
-    displayName: string;
-    avatarUrl: string | null;
-  };
+  author: Author;
   _count: { comments: number };
   likes: { userId: string; type: string }[];
+  saves: { id: string }[];
+  sharedPost: RawShared;
 };
 
 @Injectable()
@@ -100,23 +112,48 @@ export class PostsService {
       topReactions,
       myReaction: p.likes.find((r) => r.userId === meId)?.type ?? null,
       commentCount: p._count.comments,
+      savedByMe: p.saves.length > 0,
+      sharedPost: p.sharedPost
+        ? {
+            id: p.sharedPost.id,
+            content: p.sharedPost.content,
+            imageUrl: p.sharedPost.imageUrl,
+            createdAt: p.sharedPost.createdAt,
+            author: p.sharedPost.author,
+          }
+        : null,
     };
   }
 
-  private postInclude() {
+  private postInclude(meId: string) {
     return {
       author: { select: publicUser },
       _count: { select: { comments: true } },
       likes: { select: { userId: true, type: true } },
+      saves: { where: { userId: meId }, select: { id: true } },
+      sharedPost: {
+        select: {
+          id: true,
+          content: true,
+          imageUrl: true,
+          createdAt: true,
+          author: { select: publicUser },
+        },
+      },
     };
   }
 
   async createPost(
     meId: string,
-    data: { content?: string; imageUrl?: string; visibility?: string },
+    data: {
+      content?: string;
+      imageUrl?: string;
+      visibility?: string;
+      sharedPostId?: string;
+    },
   ) {
     const content = (data.content ?? '').trim();
-    if (!content && !data.imageUrl) {
+    if (!content && !data.imageUrl && !data.sharedPostId) {
       throw new BadRequestException('La publicación está vacía');
     }
     const visibility = ['public', 'friends', 'private'].includes(
@@ -124,17 +161,61 @@ export class PostsService {
     )
       ? data.visibility!
       : 'friends';
+
+    // Si comparte, validamos que la publicación original existe; y si la
+    // original ya era una compartición, apuntamos a la raíz.
+    let sharedPostId = data.sharedPostId ?? null;
+    if (sharedPostId) {
+      const original = await this.prisma.post.findUnique({
+        where: { id: sharedPostId },
+        select: { id: true, sharedPostId: true, authorId: true },
+      });
+      if (!original) throw new NotFoundException('Publicación no encontrada');
+      sharedPostId = original.sharedPostId ?? original.id;
+    }
+
     const post = await this.prisma.post.create({
       data: {
         authorId: meId,
         content,
         imageUrl: data.imageUrl ?? null,
         visibility,
+        sharedPostId,
       },
-      include: this.postInclude(),
+      include: this.postInclude(meId),
     });
     await this.notifyMentions(content, meId, post.id);
     return this.format(post as RawPost, meId);
+  }
+
+  // ---- Guardar publicaciones --------------------------------------------
+
+  async savePost(meId: string, postId: string) {
+    const post = await this.prisma.post.findUnique({
+      where: { id: postId },
+      select: { id: true },
+    });
+    if (!post) throw new NotFoundException('Publicación no encontrada');
+    await this.prisma.savedPost.upsert({
+      where: { postId_userId: { postId, userId: meId } },
+      create: { postId, userId: meId },
+      update: {},
+    });
+    return { ok: true };
+  }
+
+  async unsavePost(meId: string, postId: string) {
+    await this.prisma.savedPost.deleteMany({ where: { postId, userId: meId } });
+    return { ok: true };
+  }
+
+  async listSaved(meId: string) {
+    const saved = await this.prisma.savedPost.findMany({
+      where: { userId: meId },
+      orderBy: { createdAt: 'desc' },
+      include: { post: { include: this.postInclude(meId) } },
+    });
+    return saved.map((s) => this.format(s.post as RawPost, meId));
   }
 
   /** Detecta @usuario en el texto y notifica a los etiquetados. */
@@ -168,7 +249,7 @@ export class PostsService {
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
-      include: this.postInclude(),
+      include: this.postInclude(meId),
     });
     return posts.map((p) => this.format(p as RawPost, meId));
   }
@@ -194,7 +275,7 @@ export class PostsService {
       where: { authorId: user.id, ...(visibility ? { visibility } : {}) },
       orderBy: { createdAt: 'desc' },
       take: 50,
-      include: this.postInclude(),
+      include: this.postInclude(meId),
     });
     return posts.map((p) => this.format(p as RawPost, meId));
   }
@@ -243,37 +324,109 @@ export class PostsService {
     return { ok: true };
   }
 
-  async addComment(meId: string, postId: string, content: string) {
+  async addComment(
+    meId: string,
+    postId: string,
+    content: string,
+    parentId?: string,
+  ) {
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
       select: { id: true, authorId: true },
     });
     if (!post) throw new NotFoundException('Publicación no encontrada');
+
+    let parent: { authorId: string } | null = null;
+    if (parentId) {
+      parent = await this.prisma.comment.findFirst({
+        where: { id: parentId, postId },
+        select: { authorId: true },
+      });
+      if (!parent) throw new NotFoundException('Comentario no encontrado');
+    }
+
     const comment = await this.prisma.comment.create({
-      data: { postId, authorId: meId, content },
+      data: { postId, authorId: meId, content, parentId: parentId ?? null },
       include: { author: { select: publicUser } },
     });
     await this.notifications.create(post.authorId, meId, 'comment', postId);
+    if (parent) {
+      await this.notifications.create(parent.authorId, meId, 'comment', postId);
+    }
     await this.notifyMentions(content, meId, postId);
     return {
       id: comment.id,
       content: comment.content,
       createdAt: comment.createdAt,
       author: comment.author,
+      parentId: parentId ?? null,
+      likeCount: 0,
+      likedByMe: false,
+      replies: [],
     };
   }
 
-  async listComments(postId: string) {
+  async listComments(postId: string, meId: string) {
     const comments = await this.prisma.comment.findMany({
       where: { postId },
       orderBy: { createdAt: 'asc' },
-      include: { author: { select: publicUser } },
+      include: {
+        author: { select: publicUser },
+        likes: { select: { userId: true } },
+      },
     });
-    return comments.map((c) => ({
+    const fmt = (c: (typeof comments)[number]) => ({
       id: c.id,
       content: c.content,
       createdAt: c.createdAt,
       author: c.author,
-    }));
+      parentId: c.parentId,
+      likeCount: c.likes.length,
+      likedByMe: c.likes.some((l) => l.userId === meId),
+      replies: [] as ReturnType<typeof fmt>[],
+    });
+    const byId = new Map(comments.map((c) => [c.id, fmt(c)]));
+    const roots: ReturnType<typeof fmt>[] = [];
+    for (const c of byId.values()) {
+      if (c.parentId && byId.has(c.parentId)) {
+        byId.get(c.parentId)!.replies.push(c);
+      } else {
+        roots.push(c);
+      }
+    }
+    return roots;
+  }
+
+  async likeComment(meId: string, commentId: string) {
+    const comment = await this.prisma.comment.findUnique({
+      where: { id: commentId },
+      select: { id: true, authorId: true, postId: true },
+    });
+    if (!comment) throw new NotFoundException('Comentario no encontrado');
+    const existing = await this.prisma.commentLike.findUnique({
+      where: { commentId_userId: { commentId, userId: meId } },
+      select: { id: true },
+    });
+    await this.prisma.commentLike.upsert({
+      where: { commentId_userId: { commentId, userId: meId } },
+      create: { commentId, userId: meId },
+      update: {},
+    });
+    if (!existing) {
+      await this.notifications.create(
+        comment.authorId,
+        meId,
+        'like',
+        comment.postId,
+      );
+    }
+    return { ok: true };
+  }
+
+  async unlikeComment(meId: string, commentId: string) {
+    await this.prisma.commentLike.deleteMany({
+      where: { commentId, userId: meId },
+    });
+    return { ok: true };
   }
 }

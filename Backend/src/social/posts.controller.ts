@@ -60,8 +60,8 @@ export class PostsController {
   }
 
   @Get('posts/:id/comments')
-  comments(@Param('id') id: string) {
-    return this.posts.listComments(id);
+  comments(@CurrentUser() me: AuthUser, @Param('id') id: string) {
+    return this.posts.listComments(id, me.id);
   }
 
   @Post('posts/:id/comments')
@@ -70,6 +70,33 @@ export class PostsController {
     @Param('id') id: string,
     @Body() dto: CreateCommentDto,
   ) {
-    return this.posts.addComment(me.id, id, dto.content);
+    return this.posts.addComment(me.id, id, dto.content, dto.parentId);
+  }
+
+  // Likes en comentarios
+  @Post('comments/:id/like')
+  likeComment(@CurrentUser() me: AuthUser, @Param('id') id: string) {
+    return this.posts.likeComment(me.id, id);
+  }
+
+  @Delete('comments/:id/like')
+  unlikeComment(@CurrentUser() me: AuthUser, @Param('id') id: string) {
+    return this.posts.unlikeComment(me.id, id);
+  }
+
+  // Guardar publicaciones
+  @Get('me/saved')
+  saved(@CurrentUser() me: AuthUser) {
+    return this.posts.listSaved(me.id);
+  }
+
+  @Post('posts/:id/save')
+  save(@CurrentUser() me: AuthUser, @Param('id') id: string) {
+    return this.posts.savePost(me.id, id);
+  }
+
+  @Delete('posts/:id/save')
+  unsave(@CurrentUser() me: AuthUser, @Param('id') id: string) {
+    return this.posts.unsavePost(me.id, id);
   }
 }

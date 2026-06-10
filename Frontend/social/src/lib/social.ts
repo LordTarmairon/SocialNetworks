@@ -11,6 +11,14 @@ export type ReactionType = 'like' | 'love' | 'haha' | 'wow' | 'sad' | 'angry';
 
 export type Visibility = 'public' | 'friends' | 'private';
 
+export interface SharedPost {
+  id: string;
+  content: string;
+  imageUrl: string | null;
+  createdAt: string;
+  author: PublicUser;
+}
+
 export interface Post {
   id: string;
   content: string;
@@ -23,6 +31,8 @@ export interface Post {
   topReactions: string[];
   myReaction: ReactionType | null;
   commentCount: number;
+  savedByMe: boolean;
+  sharedPost: SharedPost | null;
 }
 
 export interface Comment {
@@ -30,6 +40,10 @@ export interface Comment {
   content: string;
   createdAt: string;
   author: PublicUser;
+  parentId: string | null;
+  likeCount: number;
+  likedByMe: boolean;
+  replies: Comment[];
 }
 
 export type Relation =
@@ -64,15 +78,26 @@ export interface StoryGroup {
 
 export const socialApi = {
   feed: () => api.get<Post[]>('/feed'),
-  createPost: (content: string, imageUrl?: string, visibility?: Visibility) =>
-    api.post<Post>('/posts', { content, imageUrl, visibility }),
+  saved: () => api.get<Post[]>('/me/saved'),
+  createPost: (
+    content: string,
+    imageUrl?: string,
+    visibility?: Visibility,
+    sharedPostId?: string,
+  ) => api.post<Post>('/posts', { content, imageUrl, visibility, sharedPostId }),
   deletePost: (id: string) => api.del<{ ok: true }>(`/posts/${id}`),
   react: (id: string, type: ReactionType) =>
     api.post<{ ok: true }>(`/posts/${id}/react`, { type }),
   unreact: (id: string) => api.del<{ ok: true }>(`/posts/${id}/react`),
+  save: (id: string) => api.post<{ ok: true }>(`/posts/${id}/save`),
+  unsave: (id: string) => api.del<{ ok: true }>(`/posts/${id}/save`),
   comments: (id: string) => api.get<Comment[]>(`/posts/${id}/comments`),
-  addComment: (id: string, content: string) =>
-    api.post<Comment>(`/posts/${id}/comments`, { content }),
+  addComment: (id: string, content: string, parentId?: string) =>
+    api.post<Comment>(`/posts/${id}/comments`, { content, parentId }),
+  likeComment: (id: string) =>
+    api.post<{ ok: true }>(`/comments/${id}/like`),
+  unlikeComment: (id: string) =>
+    api.del<{ ok: true }>(`/comments/${id}/like`),
 
   profile: (username: string) => api.get<Profile>(`/profiles/${username}`),
   wall: (username: string) => api.get<Post[]>(`/profiles/${username}/posts`),

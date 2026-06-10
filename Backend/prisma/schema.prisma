@@ -43,10 +43,12 @@ model User {
   messageReactions MessageReaction[]         @relation("MessageReactions")
 
   // Red social (estilo Tuenti).
-  posts    Post[]
-  comments Comment[]
-  likes    Like[]
-  stories  Story[]
+  posts        Post[]
+  comments     Comment[]
+  likes        Like[]
+  commentLikes CommentLike[] @relation("CommentLikes")
+  savedPosts   SavedPost[]   @relation("SavedPosts")
+  stories      Story[]
 
   // Novedades: visitas a perfil y notificaciones.
   viewsMade     ProfileView[]  @relation("ViewsMade")
@@ -160,16 +162,20 @@ model MessageReaction {
 // y stories efímeras.
 // ===========================================================================
 model Post {
-  id         String   @id @default(uuid())
-  authorId   String
-  content    String
-  imageUrl   String?
-  visibility String   @default("friends") // public | friends | private
-  createdAt  DateTime @default(now())
+  id           String   @id @default(uuid())
+  authorId     String
+  content      String
+  imageUrl     String?
+  visibility   String   @default("friends") // public | friends | private
+  sharedPostId String? // si es una publicación compartida
+  createdAt    DateTime @default(now())
 
-  author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  comments Comment[]
-  likes    Like[]
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments   Comment[]
+  likes      Like[]
+  saves      SavedPost[]
+  sharedPost Post?       @relation("PostShares", fields: [sharedPostId], references: [id], onDelete: SetNull)
+  shares     Post[]      @relation("PostShares")
 
   @@index([authorId, createdAt])
   @@map("posts")
@@ -180,13 +186,46 @@ model Comment {
   postId    String
   authorId  String
   content   String
+  parentId  String? // respuesta a otro comentario
   createdAt DateTime @default(now())
 
-  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  post    Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author  User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parent  Comment?      @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[]     @relation("CommentReplies")
+  likes   CommentLike[]
 
   @@index([postId, createdAt])
   @@map("comments")
+}
+
+// "Me gusta" en un comentario.
+model CommentLike {
+  id        String   @id @default(uuid())
+  commentId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User    @relation("CommentLikes", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@map("comment_likes")
+}
+
+// Publicación guardada (marcador) por un usuario.
+model SavedPost {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation("SavedPosts", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([userId])
+  @@map("saved_posts")
 }
 
 model Like {

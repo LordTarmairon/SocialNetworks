@@ -9,6 +9,8 @@ import {
   type ReactionType,
 } from '../lib/social';
 import { Avatar } from './Avatar';
+import { CommentItem } from './CommentItem';
+import { MentionText } from './MentionText';
 
 const VIS_ICON: Record<string, string> = {
   public: '🌐',
@@ -30,9 +32,10 @@ interface Props {
   post: Post;
   canDelete?: boolean;
   onDeleted?: (id: string) => void;
+  onShared?: (post: Post) => void;
 }
 
-export function PostCard({ post, canDelete, onDeleted }: Props) {
+export function PostCard({ post, canDelete, onDeleted, onShared }: Props) {
   const [reactions, setReactions] = useState<Record<string, number>>(
     post.reactions,
   );
@@ -44,6 +47,8 @@ export function PostCard({ post, canDelete, onDeleted }: Props) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [commentText, setCommentText] = useState('');
+  const [saved, setSaved] = useState(post.savedByMe);
+  const [sharing, setSharing] = useState(false);
 
   const count = Object.values(reactions).reduce((a, b) => a + b, 0);
   const top = Object.entries(reactions)
@@ -111,6 +116,34 @@ export function PostCard({ post, canDelete, onDeleted }: Props) {
     setCommentText('');
   }
 
+  async function toggleSave() {
+    const next = !saved;
+    setSaved(next);
+    try {
+      if (next) await socialApi.save(post.id);
+      else await socialApi.unsave(post.id);
+    } catch {
+      setSaved(!next);
+    }
+  }
+
+  async function share() {
+    const text = window.prompt('Comparte esta publicación (texto opcional):');
+    if (text === null) return; // cancelado
+    setSharing(true);
+    try {
+      const created = await socialApi.createPost(
+        text.trim(),
+        undefined,
+        undefined,
+        post.sharedPost?.id ?? post.id,
+      );
+      onShared?.(created);
+    } finally {
+      setSharing(false);
+    }
+  }
+
   async function handleDelete() {
     await socialApi.deletePost(post.id);
     onDeleted?.(post.id);
@@ -128,6 +161,7 @@ export function PostCard({ post, canDelete, onDeleted }: Props) {
           </Link>
           <span className="post-time">
             {timeAgo(post.createdAt)} · {VIS_ICON[post.visibility] ?? '👥'}
+            {post.sharedPost && ' · 🔁 compartió'}
           </span>
         </div>
         {canDelete && (
@@ -137,9 +171,37 @@ export function PostCard({ post, canDelete, onDeleted }: Props) {
         )}
       </header>
 
-      {post.content && <p className="post-content">{post.content}</p>}
+      {post.content && (
+        <p className="post-content">
+          <MentionText text={post.content} />
+        </p>
+      )}
       {post.imageUrl && (
         <img className="post-image" src={mediaUrl(post.imageUrl)} alt="" />
+      )}
+
+      {/* Publicación compartida (embebida) */}
+      {post.sharedPost && (
+        <Link to={`/u/${post.sharedPost.author.username}`} className="shared">
+          <div className="shared-head">
+            <Avatar
+              name={post.sharedPost.author.displayName}
+              src={post.sharedPost.author.avatarUrl}
+              size={26}
+            />
+            <strong>{post.sharedPost.author.displayName}</strong>
+          </div>
+          {post.sharedPost.content && (
+            <p className="shared-content">{post.sharedPost.content}</p>
+          )}
+          {post.sharedPost.imageUrl && (
+            <img
+              className="shared-image"
+              src={mediaUrl(post.sharedPost.imageUrl)}
+              alt=""
+            />
+          )}
+        </Link>
       )}
 
       {count > 0 && (
@@ -185,27 +247,27 @@ export function PostCard({ post, canDelete, onDeleted }: Props) {
         <button className="post-action" onClick={openComments}>
           💬 {commentCount}
         </button>
+        <button
+          className="post-action"
+          onClick={share}
+          disabled={sharing}
+          title="Compartir"
+        >
+          🔁 Compartir
+        </button>
+        <button
+          className={`post-action ${saved ? 'reacted' : ''}`}
+          onClick={toggleSave}
+          title={saved ? 'Guardado' : 'Guardar'}
+        >
+          {saved ? '🔖' : '🏷️'}
+        </button>
       </div>
 
       {showComments && (
         <div className="comments">
           {comments.map((c) => (
-            <div key={c.id} className="comment">
-              <Avatar
-                name={c.author.displayName}
-                src={c.author.avatarUrl}
-                size={30}
-              />
-              <div className="comment-body">
-                <Link
-                  className="comment-author"
-                  to={`/u/${c.author.username}`}
-                >
-                  {c.author.displayName}
-                </Link>
-                <span>{c.content}</span>
-              </div>
-            </div>
+            <CommentItem key={c.id} comment={c} postId={post.id} />
           ))}
           <form className="comment-form" onSubmit={submitComment}>
             <input

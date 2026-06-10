@@ -9,6 +9,7 @@ import { FeedPage } from './pages/FeedPage';
 import { LoginPage } from './pages/LoginPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { RegisterPage } from './pages/RegisterPage';
+import { SavedPage } from './pages/SavedPage';
 import { VisitorsPage } from './pages/VisitorsPage';
 
 function Protected({ children }: { children: ReactNode }) {
@@ -63,6 +64,14 @@ function App() {
         element={
           <Protected>
             <VisitorsPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/guardados"
+        element={
+          <Protected>
+            <SavedPage />
           </Protected>
         }
       />

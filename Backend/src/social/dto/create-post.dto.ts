@@ -14,4 +14,8 @@ export class CreatePostDto {
   @IsOptional()
   @IsIn(['public', 'friends', 'private'])
   visibility?: string;
+
+  @IsOptional()
+  @IsString()
+  sharedPostId?: string;
 }

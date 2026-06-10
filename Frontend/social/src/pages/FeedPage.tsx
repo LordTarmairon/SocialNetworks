@@ -153,6 +153,7 @@ export function FeedPage() {
               post={p}
               canDelete={p.author.id === user?.id}
               onDeleted={onDeleted}
+              onShared={(np) => setPosts((prev) => [np, ...prev])}
             />
           ))
         )}
