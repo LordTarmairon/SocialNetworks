@@ -75,15 +75,32 @@ export class ProfileService {
       else relation = 'pending_incoming';
     }
 
-    const iBlocked =
-      meId === user.id
-        ? false
-        : !!(await this.prisma.block.findUnique({
-            where: {
-              blockerId_blockedId: { blockerId: meId, blockedId: user.id },
-            },
-            select: { id: true },
-          }));
+    const [iBlocked, followerCount, followingCount, followRel] =
+      await Promise.all([
+        meId === user.id
+          ? Promise.resolve(false)
+          : this.prisma.block
+              .findUnique({
+                where: {
+                  blockerId_blockedId: { blockerId: meId, blockedId: user.id },
+                },
+                select: { id: true },
+              })
+              .then((b) => !!b),
+        this.prisma.follow.count({ where: { followingId: user.id } }),
+        this.prisma.follow.count({ where: { followerId: user.id } }),
+        meId === user.id
+          ? Promise.resolve(null)
+          : this.prisma.follow.findUnique({
+              where: {
+                followerId_followingId: {
+                  followerId: meId,
+                  followingId: user.id,
+                },
+              },
+              select: { id: true },
+            }),
+      ]);
 
     return {
       id: user.id,
@@ -96,6 +113,9 @@ export class ProfileService {
       friendCount,
       relation,
       iBlocked,
+      followerCount,
+      followingCount,
+      isFollowing: !!followRel,
     };
   }
 }

@@ -63,4 +63,14 @@ export class FriendsController {
   unblock(@CurrentUser() me: AuthUser, @Param('username') username: string) {
     return this.friends.unblock(me.id, username);
   }
+
+  @Post('users/:username/follow')
+  follow(@CurrentUser() me: AuthUser, @Param('username') username: string) {
+    return this.friends.follow(me.id, username);
+  }
+
+  @Delete('users/:username/follow')
+  unfollow(@CurrentUser() me: AuthUser, @Param('username') username: string) {
+    return this.friends.unfollow(me.id, username);
+  }
 }

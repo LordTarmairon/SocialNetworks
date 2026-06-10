@@ -16,7 +16,8 @@ export type NotificationType =
   | 'friend_accept'
   | 'mention'
   | 'profile_view'
-  | 'photo_tag';
+  | 'photo_tag'
+  | 'follow';
 
 @Injectable()
 export class NotificationsService {

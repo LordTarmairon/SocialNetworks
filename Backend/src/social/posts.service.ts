@@ -248,13 +248,25 @@ export class PostsService {
     }
   }
 
-  /** Feed: publicaciones propias y de los amigos (sin los 'solo yo' ajenos). */
+  /** Feed: propios + de amigos + públicos de quien sigo (sin bloqueados/privados ajenos). */
   async feed(meId: string) {
-    const authorIds = [meId, ...(await this.friendIds(meId))];
+    const friends = await this.friendIds(meId);
+    const blocked = await this.blockedIds(meId);
+    const following = (
+      await this.prisma.follow.findMany({
+        where: { followerId: meId },
+        select: { followingId: true },
+      })
+    ).map((f) => f.followingId);
+
     const posts = await this.prisma.post.findMany({
       where: {
-        authorId: { in: authorIds },
-        OR: [{ authorId: meId }, { visibility: { not: 'private' } }],
+        authorId: { notIn: blocked },
+        OR: [
+          { authorId: meId },
+          { authorId: { in: friends }, visibility: { not: 'private' } },
+          { authorId: { in: following }, visibility: 'public' },
+        ],
       },
       orderBy: { createdAt: 'desc' },
       take: 50,

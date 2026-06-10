@@ -76,6 +76,12 @@ export function ProfilePage() {
                 <span>
                   <strong>{profile.friendCount}</strong> contactos
                 </span>
+                <span>
+                  <strong>{profile.followerCount}</strong> seguidores
+                </span>
+                <span>
+                  <strong>{profile.followingCount}</strong> siguiendo
+                </span>
               </div>
               {profile.relation === 'self' ? (
                 <button
@@ -89,6 +95,27 @@ export function ProfilePage() {
                   <span className="profile-relation">
                     {relationLabel[profile.relation]}
                   </span>
+                  {!profile.iBlocked && (
+                    <button
+                      className={`${
+                        profile.isFollowing ? 'btn-ghost' : 'btn-green'
+                      } profile-block-btn`}
+                      onClick={async () => {
+                        try {
+                          if (profile.isFollowing) {
+                            await friendsApi.unfollow(profile.username);
+                          } else {
+                            await friendsApi.follow(profile.username);
+                          }
+                          setProfile(await socialApi.profile(profile.username));
+                        } catch (err) {
+                          setError(errorMessage(err));
+                        }
+                      }}
+                    >
+                      {profile.isFollowing ? 'Dejar de seguir' : 'Seguir'}
+                    </button>
+                  )}
                   <button
                     className="btn-ghost profile-block-btn"
                     onClick={async () => {

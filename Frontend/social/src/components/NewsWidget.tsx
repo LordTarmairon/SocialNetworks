@@ -22,6 +22,8 @@ function notifText(n: Notification): string {
       return 'te ha etiquetado en una foto';
     case 'profile_view':
       return 'ha visto tu perfil';
+    case 'follow':
+      return 'ha empezado a seguirte';
     default:
       return '';
   }

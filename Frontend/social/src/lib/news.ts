@@ -8,7 +8,8 @@ export type NotificationType =
   | 'friend_accept'
   | 'mention'
   | 'photo_tag'
-  | 'profile_view';
+  | 'profile_view'
+  | 'follow';
 
 export interface Notification {
   id: string;

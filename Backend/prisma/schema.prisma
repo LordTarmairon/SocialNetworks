@@ -73,7 +73,26 @@ model User {
   storyViews     StoryView[]     @relation("StoryViews")
   storyReactions StoryReaction[] @relation("StoryReactions")
 
+  // Seguir (follow), independiente de la amistad.
+  following Follow[] @relation("Following")
+  followers Follow[] @relation("Followers")
+
   @@map("users")
+}
+
+// Seguimiento unidireccional de un usuario a otro.
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+  @@map("follows")
 }
 
 // Bloqueo de un usuario a otro.

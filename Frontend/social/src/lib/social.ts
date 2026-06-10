@@ -64,6 +64,9 @@ export interface Profile {
   friendCount: number;
   relation: Relation;
   iBlocked: boolean;
+  followerCount: number;
+  followingCount: number;
+  isFollowing: boolean;
 }
 
 export interface StoryItem {

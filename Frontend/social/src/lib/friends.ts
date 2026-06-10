@@ -33,4 +33,8 @@ export const friendsApi = {
   unblock: (username: string) =>
     api.del<{ ok: true }>(`/users/${username}/block`),
   listBlocked: () => api.get<PublicUser[]>('/me/blocked'),
+  follow: (username: string) =>
+    api.post<{ ok: true }>(`/users/${username}/follow`),
+  unfollow: (username: string) =>
+    api.del<{ ok: true }>(`/users/${username}/follow`),
 };

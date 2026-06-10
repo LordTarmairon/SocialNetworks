@@ -244,4 +244,57 @@ export class FriendsService {
     });
     return !!b;
   }
+
+  /** Sigue a un usuario (independiente de la amistad). */
+  async follow(meId: string, username: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (user.id === meId) {
+      throw new BadRequestException('No puedes seguirte a ti mismo');
+    }
+    if ((await this.blockedIds(meId)).includes(user.id)) {
+      throw new BadRequestException('No puedes seguir a este usuario');
+    }
+    const existing = await this.prisma.follow.findUnique({
+      where: {
+        followerId_followingId: { followerId: meId, followingId: user.id },
+      },
+      select: { id: true },
+    });
+    await this.prisma.follow.upsert({
+      where: {
+        followerId_followingId: { followerId: meId, followingId: user.id },
+      },
+      create: { followerId: meId, followingId: user.id },
+      update: {},
+    });
+    if (!existing) {
+      await this.notifications.create(user.id, meId, 'follow');
+    }
+    return { ok: true };
+  }
+
+  async unfollow(meId: string, username: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    await this.prisma.follow.deleteMany({
+      where: { followerId: meId, followingId: user.id },
+    });
+    return { ok: true };
+  }
+
+  /** IDs de los usuarios que sigo (para incluir sus posts públicos en el feed). */
+  async followingIds(meId: string): Promise<string[]> {
+    const fs = await this.prisma.follow.findMany({
+      where: { followerId: meId },
+      select: { followingId: true },
+    });
+    return fs.map((f) => f.followingId);
+  }
 }
