@@ -17,6 +17,7 @@ import {
 import { errorMessage } from '../lib/errors';
 import { mediaUrl, uploadImage } from '../lib/media';
 import { presenceText } from '../lib/presence';
+import { ForwardModal } from './ForwardModal';
 import { useSocket } from './SocketContext';
 
 const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
@@ -24,9 +25,10 @@ const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 interface Props {
   conversation: Conversation;
   meId: string;
+  onOpenInfo?: () => void;
 }
 
-export function ConversationView({ conversation, meId }: Props) {
+export function ConversationView({ conversation, meId, onOpenInfo }: Props) {
   const socket = useSocket();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
@@ -37,6 +39,7 @@ export function ConversationView({ conversation, meId }: Props) {
   const [pickerFor, setPickerFor] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  const [forwardFor, setForwardFor] = useState<Message | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -211,6 +214,17 @@ export function ConversationView({ conversation, meId }: Props) {
     }
   }
 
+  function forwardTo(target: Conversation) {
+    if (!socket || !forwardFor) return;
+    socket.emit('message:send', {
+      conversationId: target.id,
+      content: forwardFor.content,
+      attachmentUrl: forwardFor.attachmentUrl ?? undefined,
+      forwarded: true,
+    });
+    setForwardFor(null);
+  }
+
   const other = conversation.otherUser;
   const statusText = otherTyping
     ? 'escribiendo…'
@@ -240,12 +254,16 @@ export function ConversationView({ conversation, meId }: Props) {
 
   return (
     <div className="thread">
-      <header className="thread-header">
+      <header
+        className={`thread-header ${conversation.isGroup ? 'clickable' : ''}`}
+        onClick={conversation.isGroup ? onOpenInfo : undefined}
+      >
         <Avatar name={av.name} src={av.src} size={40} />
         <div>
           <div className="thread-name">{convName(conversation)}</div>
           <div className={`thread-status ${otherTyping ? 'typing' : ''}`}>
             {headerStatus}
+            {conversation.isGroup && ' · ⓘ ver info'}
           </div>
         </div>
       </header>
@@ -291,6 +309,9 @@ export function ConversationView({ conversation, meId }: Props) {
                   </form>
                 ) : (
                   <>
+                    {m.forwarded && (
+                      <span className="bubble-forwarded">↪ Reenviado</span>
+                    )}
                     {m.replyTo && (
                       <div className="bubble-reply">
                         {m.replyTo.content ||
@@ -346,6 +367,9 @@ export function ConversationView({ conversation, meId }: Props) {
                     }
                   >
                     😀
+                  </button>
+                  <button title="Reenviar" onClick={() => setForwardFor(m)}>
+                    ➡️
                   </button>
                   {mine && (
                     <button title="Editar" onClick={() => startEdit(m)}>
@@ -411,6 +435,14 @@ export function ConversationView({ conversation, meId }: Props) {
           Enviar
         </button>
       </form>
+
+      {forwardFor && (
+        <ForwardModal
+          excludeId={conversation.id}
+          onClose={() => setForwardFor(null)}
+          onPick={forwardTo}
+        />
+      )}
     </div>
   );
 }

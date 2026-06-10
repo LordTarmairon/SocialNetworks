@@ -192,6 +192,7 @@ export class MessagesService {
       attachmentUrl: m.deleted ? null : m.attachmentUrl,
       deleted: m.deleted ?? false,
       editedAt: m.editedAt ?? null,
+      forwarded: m.forwarded ?? false,
       createdAt: m.createdAt,
       readAt: showReadReceipts ? m.readAt : null,
       replyTo: m.replyTo
@@ -229,6 +230,7 @@ export class MessagesService {
     content: string,
     attachmentUrl?: string | null,
     replyToId?: string | null,
+    forwarded?: boolean,
   ) {
     await this.assertParticipant(meId, conversationId);
     const message = await this.prisma.message.create({
@@ -238,6 +240,7 @@ export class MessagesService {
         content,
         attachmentUrl: attachmentUrl ?? null,
         replyToId: replyToId ?? null,
+        forwarded: forwarded ?? false,
       },
       include: this.messageInclude,
     });
@@ -421,5 +424,42 @@ export class MessagesService {
       where: { conversationId, userId: meId },
     });
     return { ok: true };
+  }
+
+  private async assertGroup(meId: string, conversationId: string) {
+    await this.assertParticipant(meId, conversationId);
+    const conv = await this.prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: { isGroup: true },
+    });
+    if (!conv?.isGroup) {
+      throw new ForbiddenException('No es un grupo');
+    }
+  }
+
+  /** Añade contactos (amigos) a un grupo. */
+  async addMembers(meId: string, conversationId: string, memberIds: string[]) {
+    await this.assertGroup(meId, conversationId);
+    const friends = new Set(await this.friendIds(meId));
+    const current = new Set(await this.participantIds(conversationId));
+    const toAdd = memberIds.filter(
+      (id) => friends.has(id) && !current.has(id),
+    );
+    if (toAdd.length > 0) {
+      await this.prisma.conversationParticipant.createMany({
+        data: toAdd.map((userId) => ({ conversationId, userId })),
+      });
+    }
+    return this.toSummary(meId, conversationId);
+  }
+
+  /** Renombra un grupo. */
+  async renameGroup(meId: string, conversationId: string, name: string) {
+    await this.assertGroup(meId, conversationId);
+    await this.prisma.conversation.update({
+      where: { id: conversationId },
+      data: { name: name.trim() || 'Grupo' },
+    });
+    return this.toSummary(meId, conversationId);
   }
 }

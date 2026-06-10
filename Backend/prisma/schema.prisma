@@ -130,6 +130,7 @@ model Message {
   replyToId      String?
   editedAt       DateTime?
   deleted        Boolean   @default(false)
+  forwarded      Boolean   @default(false)
   createdAt      DateTime  @default(now())
   readAt         DateTime?
 

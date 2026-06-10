@@ -374,6 +374,35 @@ body {
   color: var(--primary);
   margin-bottom: 0.15rem;
 }
+.bubble-forwarded {
+  display: block;
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--text-muted);
+  margin-bottom: 0.15rem;
+}
+.thread-header.clickable {
+  cursor: pointer;
+}
+.thread-header.clickable:hover {
+  background: var(--surface-2);
+}
+.group-rename {
+  display: flex;
+  gap: 0.4rem;
+}
+.group-rename .group-name {
+  flex: 1;
+}
+.group-leave {
+  background: transparent;
+  border: 1px solid #5a2a2a;
+  color: var(--error);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  margin-right: auto;
+}
 
 /* ---------- Modal de nuevo grupo ---------- */
 .group-overlay {

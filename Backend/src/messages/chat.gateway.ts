@@ -19,6 +19,7 @@ interface SendPayload {
   content: string;
   attachmentUrl?: string;
   replyToId?: string;
+  forwarded?: boolean;
 }
 
 /**
@@ -122,6 +123,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         content,
         attachmentUrl,
         body.replyToId?.trim() || null,
+        !!body.forwarded,
       );
       const participants = await this.messages.participantIds(
         body.conversationId,

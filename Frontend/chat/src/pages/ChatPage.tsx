@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { ConversationView } from '../chat/ConversationView';
+import { GroupInfoModal } from '../chat/GroupInfoModal';
 import { NewGroupModal } from '../chat/NewGroupModal';
 import { useSocket } from '../chat/SocketContext';
 import { Avatar } from '../components/Avatar';
@@ -21,6 +22,7 @@ export function ChatPage() {
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [showGroup, setShowGroup] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   const load = useCallback(async () => {
     setConversations(await chatApi.listConversations());
@@ -142,7 +144,11 @@ export function ChatPage() {
 
       <section className="chat-main">
         {selected && user ? (
-          <ConversationView conversation={selected} meId={user.id} />
+          <ConversationView
+            conversation={selected}
+            meId={user.id}
+            onOpenInfo={() => setShowInfo(true)}
+          />
         ) : (
           <div className="chat-empty">
             <p>Selecciona un chat, crea un grupo o empieza uno desde Contactos 💬</p>
@@ -157,6 +163,23 @@ export function ChatPage() {
             setConversations((prev) => [conv, ...prev]);
             setShowGroup(false);
             navigate(`/c/${conv.id}`);
+          }}
+        />
+      )}
+
+      {showInfo && selected && selected.isGroup && (
+        <GroupInfoModal
+          conversation={selected}
+          onClose={() => setShowInfo(false)}
+          onUpdated={(conv) =>
+            setConversations((prev) =>
+              prev.map((c) => (c.id === conv.id ? conv : c)),
+            )
+          }
+          onLeft={() => {
+            setConversations((prev) => prev.filter((c) => c.id !== selected.id));
+            setShowInfo(false);
+            navigate('/');
           }}
         />
       )}

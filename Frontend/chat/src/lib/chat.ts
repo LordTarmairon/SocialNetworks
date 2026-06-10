@@ -45,6 +45,7 @@ export interface Message {
   attachmentUrl: string | null;
   deleted: boolean;
   editedAt: string | null;
+  forwarded: boolean;
   createdAt: string;
   readAt: string | null;
   replyTo: ReplyRef | null;
@@ -77,6 +78,14 @@ export const chatApi = {
 
   leaveGroup: (conversationId: string) =>
     api.post<{ ok: true }>(`/conversations/${conversationId}/leave`, {}),
+
+  addMembers: (conversationId: string, memberIds: string[]) =>
+    api.post<Conversation>(`/conversations/${conversationId}/members`, {
+      memberIds,
+    }),
+
+  renameGroup: (conversationId: string, name: string) =>
+    api.patch<Conversation>(`/conversations/${conversationId}`, { name }),
 
   listMessages: (conversationId: string) =>
     api.get<Message[]>(`/conversations/${conversationId}/messages`),

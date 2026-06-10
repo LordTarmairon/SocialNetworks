@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -37,6 +38,24 @@ export class MessagesController {
   @Post(':id/leave')
   leave(@CurrentUser() me: AuthUser, @Param('id') id: string) {
     return this.messages.leaveGroup(me.id, id);
+  }
+
+  @Post(':id/members')
+  addMembers(
+    @CurrentUser() me: AuthUser,
+    @Param('id') id: string,
+    @Body('memberIds') memberIds: string[],
+  ) {
+    return this.messages.addMembers(me.id, id, memberIds ?? []);
+  }
+
+  @Patch(':id')
+  rename(
+    @CurrentUser() me: AuthUser,
+    @Param('id') id: string,
+    @Body('name') name: string,
+  ) {
+    return this.messages.renameGroup(me.id, id, name ?? '');
   }
 
   @Get(':id/messages')
