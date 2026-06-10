@@ -34,14 +34,29 @@ export class PostsController {
     return this.posts.deletePost(me.id, id);
   }
 
+  @Post('posts/:id/react')
+  react(
+    @CurrentUser() me: AuthUser,
+    @Param('id') id: string,
+    @Body('type') type: string,
+  ) {
+    return this.posts.react(me.id, id, type ?? 'like');
+  }
+
+  @Delete('posts/:id/react')
+  unreact(@CurrentUser() me: AuthUser, @Param('id') id: string) {
+    return this.posts.unreact(me.id, id);
+  }
+
+  // Compatibilidad: like simple.
   @Post('posts/:id/like')
   like(@CurrentUser() me: AuthUser, @Param('id') id: string) {
-    return this.posts.like(me.id, id);
+    return this.posts.react(me.id, id, 'like');
   }
 
   @Delete('posts/:id/like')
   unlike(@CurrentUser() me: AuthUser, @Param('id') id: string) {
-    return this.posts.unlike(me.id, id);
+    return this.posts.unreact(me.id, id);
   }
 
   @Get('posts/:id/comments')

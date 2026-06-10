@@ -14,6 +14,16 @@ const publicUser = {
   avatarUrl: true,
 } as const;
 
+export const REACTION_TYPES = [
+  'like',
+  'love',
+  'haha',
+  'wow',
+  'sad',
+  'angry',
+] as const;
+export type ReactionType = (typeof REACTION_TYPES)[number];
+
 type RawPost = {
   id: string;
   authorId: string;
@@ -26,8 +36,8 @@ type RawPost = {
     displayName: string;
     avatarUrl: string | null;
   };
-  _count: { likes: number; comments: number };
-  likes: { id: string }[];
+  _count: { comments: number };
+  likes: { userId: string; type: string }[];
 };
 
 @Injectable()
@@ -66,24 +76,36 @@ export class PostsService {
     );
   }
 
-  private format(p: RawPost) {
+  private format(p: RawPost, meId: string) {
+    // Recuento por tipo de reacción.
+    const breakdown: Record<string, number> = {};
+    for (const r of p.likes) {
+      breakdown[r.type] = (breakdown[r.type] ?? 0) + 1;
+    }
+    // Tipos presentes ordenados por frecuencia (para mostrar los iconos top).
+    const topReactions = Object.entries(breakdown)
+      .sort((a, b) => b[1] - a[1])
+      .map(([type]) => type);
+
     return {
       id: p.id,
       content: p.content,
       imageUrl: p.imageUrl,
       createdAt: p.createdAt,
       author: p.author,
-      likeCount: p._count.likes,
+      reactionCount: p.likes.length,
+      reactions: breakdown,
+      topReactions,
+      myReaction: p.likes.find((r) => r.userId === meId)?.type ?? null,
       commentCount: p._count.comments,
-      likedByMe: p.likes.length > 0,
     };
   }
 
-  private postInclude(meId: string) {
+  private postInclude() {
     return {
       author: { select: publicUser },
-      _count: { select: { likes: true, comments: true } },
-      likes: { where: { userId: meId }, select: { id: true } },
+      _count: { select: { comments: true } },
+      likes: { select: { userId: true, type: true } },
     };
   }
 
@@ -97,10 +119,10 @@ export class PostsService {
     }
     const post = await this.prisma.post.create({
       data: { authorId: meId, content, imageUrl: data.imageUrl ?? null },
-      include: this.postInclude(meId),
+      include: this.postInclude(),
     });
     await this.notifyMentions(content, meId, post.id);
-    return this.format(post as RawPost);
+    return this.format(post as RawPost, meId);
   }
 
   /** Detecta @usuario en el texto y notifica a los etiquetados. */
@@ -131,9 +153,9 @@ export class PostsService {
       where: { authorId: { in: authorIds } },
       orderBy: { createdAt: 'desc' },
       take: 50,
-      include: this.postInclude(meId),
+      include: this.postInclude(),
     });
-    return posts.map((p) => this.format(p as RawPost));
+    return posts.map((p) => this.format(p as RawPost, meId));
   }
 
   /** Muro de un usuario (visible solo para él y sus amigos). */
@@ -150,9 +172,9 @@ export class PostsService {
       where: { authorId: user.id },
       orderBy: { createdAt: 'desc' },
       take: 50,
-      include: this.postInclude(meId),
+      include: this.postInclude(),
     });
-    return posts.map((p) => this.format(p as RawPost));
+    return posts.map((p) => this.format(p as RawPost, meId));
   }
 
   async deletePost(meId: string, postId: string) {
@@ -168,7 +190,11 @@ export class PostsService {
     return { ok: true };
   }
 
-  async like(meId: string, postId: string) {
+  /** Reacciona (o cambia la reacción) a una publicación. */
+  async react(meId: string, postId: string, type: string) {
+    const reaction = REACTION_TYPES.includes(type as ReactionType)
+      ? type
+      : 'like';
     const post = await this.prisma.post.findUnique({
       where: { id: postId },
       select: { id: true, authorId: true },
@@ -180,8 +206,8 @@ export class PostsService {
     });
     await this.prisma.like.upsert({
       where: { postId_userId: { postId, userId: meId } },
-      create: { postId, userId: meId },
-      update: {},
+      create: { postId, userId: meId, type: reaction },
+      update: { type: reaction },
     });
     // Notificamos al autor solo la primera vez.
     if (!existing) {
@@ -190,7 +216,7 @@ export class PostsService {
     return { ok: true };
   }
 
-  async unlike(meId: string, postId: string) {
+  async unreact(meId: string, postId: string) {
     await this.prisma.like.deleteMany({ where: { postId, userId: meId } });
     return { ok: true };
   }

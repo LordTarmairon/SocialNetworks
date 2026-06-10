@@ -1,8 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { Avatar } from './Avatar';
 import { mediaUrl } from '../lib/media';
-import { socialApi, type Comment, type Post } from '../lib/social';
+import { REACTION_EMOJI, REACTION_LABEL, REACTIONS } from '../lib/reactions';
+import {
+  socialApi,
+  type Comment,
+  type Post,
+  type ReactionType,
+} from '../lib/social';
+import { Avatar } from './Avatar';
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -11,7 +17,7 @@ function timeAgo(iso: string): string {
   if (mins < 60) return `hace ${mins} min`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `hace ${hours} h`;
-  return new Date(iso).toLocaleDateString();
+  return new Date(iso).toLocaleDateString('es-ES');
 }
 
 interface Props {
@@ -21,23 +27,63 @@ interface Props {
 }
 
 export function PostCard({ post, canDelete, onDeleted }: Props) {
-  const [liked, setLiked] = useState(post.likedByMe);
-  const [likeCount, setLikeCount] = useState(post.likeCount);
+  const [reactions, setReactions] = useState<Record<string, number>>(
+    post.reactions,
+  );
+  const [myReaction, setMyReaction] = useState<ReactionType | null>(
+    post.myReaction,
+  );
+  const [showPicker, setShowPicker] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentCount, setCommentCount] = useState(post.commentCount);
   const [commentText, setCommentText] = useState('');
 
-  async function toggleLike() {
-    const next = !liked;
-    setLiked(next);
-    setLikeCount((c) => c + (next ? 1 : -1));
+  const count = Object.values(reactions).reduce((a, b) => a + b, 0);
+  const top = Object.entries(reactions)
+    .sort((a, b) => b[1] - a[1])
+    .map(([t]) => t)
+    .slice(0, 3);
+
+  function apply(next: ReactionType | null) {
+    setReactions((prev) => {
+      const r = { ...prev };
+      if (myReaction) {
+        r[myReaction] = (r[myReaction] ?? 1) - 1;
+        if (r[myReaction] <= 0) delete r[myReaction];
+      }
+      if (next) r[next] = (r[next] ?? 0) + 1;
+      return r;
+    });
+    setMyReaction(next);
+  }
+
+  async function react(type: ReactionType) {
+    const prevR = reactions;
+    const prevMy = myReaction;
+    apply(type);
+    setShowPicker(false);
     try {
-      if (next) await socialApi.like(post.id);
-      else await socialApi.unlike(post.id);
+      await socialApi.react(post.id, type);
     } catch {
-      setLiked(!next);
-      setLikeCount((c) => c + (next ? -1 : 1));
+      setReactions(prevR);
+      setMyReaction(prevMy);
+    }
+  }
+
+  async function toggle() {
+    if (myReaction) {
+      const prevR = reactions;
+      const prevMy = myReaction;
+      apply(null);
+      try {
+        await socialApi.unreact(post.id);
+      } catch {
+        setReactions(prevR);
+        setMyReaction(prevMy);
+      }
+    } else {
+      await react('like');
     }
   }
 
@@ -88,13 +134,46 @@ export function PostCard({ post, canDelete, onDeleted }: Props) {
         <img className="post-image" src={mediaUrl(post.imageUrl)} alt="" />
       )}
 
+      {count > 0 && (
+        <div className="post-reaction-summary">
+          <span className="reaction-emojis">
+            {top.map((t) => (
+              <span key={t}>{REACTION_EMOJI[t]}</span>
+            ))}
+          </span>
+          <span>{count}</span>
+        </div>
+      )}
+
       <div className="post-actions">
-        <button
-          className={`post-action ${liked ? 'liked' : ''}`}
-          onClick={toggleLike}
+        <div
+          className="react-wrap"
+          onMouseEnter={() => setShowPicker(true)}
+          onMouseLeave={() => setShowPicker(false)}
         >
-          {liked ? '❤️' : '🤍'} {likeCount}
-        </button>
+          {showPicker && (
+            <div className="react-picker">
+              {REACTIONS.map((r) => (
+                <button
+                  key={r.type}
+                  className="react-opt"
+                  title={r.label}
+                  onClick={() => react(r.type)}
+                >
+                  {r.emoji}
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            className={`post-action ${myReaction ? 'reacted' : ''}`}
+            onClick={toggle}
+          >
+            {myReaction
+              ? `${REACTION_EMOJI[myReaction]} ${REACTION_LABEL[myReaction]}`
+              : '👍 Me gusta'}
+          </button>
+        </div>
         <button className="post-action" onClick={openComments}>
           💬 {commentCount}
         </button>

@@ -414,6 +414,60 @@ a {
 .post-action.liked {
   color: #e0245e;
 }
+.post-action.reacted {
+  color: var(--blue);
+  font-weight: 700;
+}
+
+/* Resumen de reacciones */
+.post-reaction-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 0.4rem 0.2rem 0;
+}
+.reaction-emojis {
+  display: inline-flex;
+}
+.reaction-emojis span {
+  margin-left: -2px;
+}
+
+/* Selector de reacciones */
+.react-wrap {
+  position: relative;
+  flex: 1;
+}
+.react-picker {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 6px;
+  display: flex;
+  gap: 0.15rem;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 0.25rem 0.4rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  z-index: 5;
+}
+.react-opt {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0.1rem;
+  transition: transform 0.1s;
+}
+.react-opt:hover {
+  transform: scale(1.35) translateY(-3px);
+}
+.react-wrap .post-action {
+  width: 100%;
+}
 
 /* ---------- Comments ---------- */
 .comments {

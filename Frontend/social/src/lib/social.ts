@@ -7,15 +7,19 @@ export interface PublicUser {
   avatarUrl?: string | null;
 }
 
+export type ReactionType = 'like' | 'love' | 'haha' | 'wow' | 'sad' | 'angry';
+
 export interface Post {
   id: string;
   content: string;
   imageUrl: string | null;
   createdAt: string;
   author: PublicUser;
-  likeCount: number;
+  reactionCount: number;
+  reactions: Record<string, number>;
+  topReactions: string[];
+  myReaction: ReactionType | null;
   commentCount: number;
-  likedByMe: boolean;
 }
 
 export interface Comment {
@@ -60,8 +64,9 @@ export const socialApi = {
   createPost: (content: string, imageUrl?: string) =>
     api.post<Post>('/posts', { content, imageUrl }),
   deletePost: (id: string) => api.del<{ ok: true }>(`/posts/${id}`),
-  like: (id: string) => api.post<{ ok: true }>(`/posts/${id}/like`),
-  unlike: (id: string) => api.del<{ ok: true }>(`/posts/${id}/like`),
+  react: (id: string, type: ReactionType) =>
+    api.post<{ ok: true }>(`/posts/${id}/react`, { type }),
+  unreact: (id: string) => api.del<{ ok: true }>(`/posts/${id}/react`),
   comments: (id: string) => api.get<Comment[]>(`/posts/${id}/comments`),
   addComment: (id: string, content: string) =>
     api.post<Comment>(`/posts/${id}/comments`, { content }),
