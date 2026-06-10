@@ -13,7 +13,12 @@ import { StoriesBar } from '../components/StoriesBar';
 import { TopBar } from '../components/TopBar';
 import { errorMessage } from '../lib/errors';
 import { mediaUrl, uploadImage } from '../lib/media';
-import { socialApi, type Post, type StoryGroup } from '../lib/social';
+import {
+  socialApi,
+  type Post,
+  type StoryGroup,
+  type Visibility,
+} from '../lib/social';
 
 export function FeedPage() {
   const { user } = useAuth();
@@ -21,6 +26,7 @@ export function FeedPage() {
   const [stories, setStories] = useState<StoryGroup[]>([]);
   const [text, setText] = useState('');
   const [image, setImage] = useState<string | null>(null);
+  const [visibility, setVisibility] = useState<Visibility>('friends');
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -55,7 +61,11 @@ export function FeedPage() {
     setPosting(true);
     setError(null);
     try {
-      const post = await socialApi.createPost(text.trim(), image ?? undefined);
+      const post = await socialApi.createPost(
+        text.trim(),
+        image ?? undefined,
+        visibility,
+      );
       setPosts((prev) => [post, ...prev]);
       setText('');
       setImage(null);
@@ -105,6 +115,16 @@ export function FeedPage() {
             >
               📷 Foto
             </button>
+            <select
+              className="composer-visibility"
+              value={visibility}
+              onChange={(e) => setVisibility(e.target.value as Visibility)}
+              title="¿Quién puede verlo?"
+            >
+              <option value="public">🌐 Público</option>
+              <option value="friends">👥 Amigos</option>
+              <option value="private">🔒 Solo yo</option>
+            </select>
             <input
               ref={fileRef}
               type="file"

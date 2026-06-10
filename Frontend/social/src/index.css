@@ -335,6 +335,17 @@ a {
   cursor: pointer;
   font-weight: 600;
 }
+.composer-visibility {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.9rem;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  margin-right: auto;
+  margin-left: 0.5rem;
+}
 .composer-submit {
   background: var(--blue);
   color: #fff;

@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreatePostDto {
   @IsOptional()
@@ -10,4 +10,8 @@ export class CreatePostDto {
   @IsString()
   @MaxLength(500)
   imageUrl?: string;
+
+  @IsOptional()
+  @IsIn(['public', 'friends', 'private'])
+  visibility?: string;
 }

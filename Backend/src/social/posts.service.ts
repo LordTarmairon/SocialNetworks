@@ -29,6 +29,7 @@ type RawPost = {
   authorId: string;
   content: string;
   imageUrl: string | null;
+  visibility: string;
   createdAt: Date;
   author: {
     id: string;
@@ -91,6 +92,7 @@ export class PostsService {
       id: p.id,
       content: p.content,
       imageUrl: p.imageUrl,
+      visibility: p.visibility,
       createdAt: p.createdAt,
       author: p.author,
       reactionCount: p.likes.length,
@@ -111,14 +113,24 @@ export class PostsService {
 
   async createPost(
     meId: string,
-    data: { content?: string; imageUrl?: string },
+    data: { content?: string; imageUrl?: string; visibility?: string },
   ) {
     const content = (data.content ?? '').trim();
     if (!content && !data.imageUrl) {
       throw new BadRequestException('La publicación está vacía');
     }
+    const visibility = ['public', 'friends', 'private'].includes(
+      data.visibility ?? '',
+    )
+      ? data.visibility!
+      : 'friends';
     const post = await this.prisma.post.create({
-      data: { authorId: meId, content, imageUrl: data.imageUrl ?? null },
+      data: {
+        authorId: meId,
+        content,
+        imageUrl: data.imageUrl ?? null,
+        visibility,
+      },
       include: this.postInclude(),
     });
     await this.notifyMentions(content, meId, post.id);
@@ -146,11 +158,14 @@ export class PostsService {
     }
   }
 
-  /** Feed: publicaciones propias y de los amigos. */
+  /** Feed: publicaciones propias y de los amigos (sin los 'solo yo' ajenos). */
   async feed(meId: string) {
     const authorIds = [meId, ...(await this.friendIds(meId))];
     const posts = await this.prisma.post.findMany({
-      where: { authorId: { in: authorIds } },
+      where: {
+        authorId: { in: authorIds },
+        OR: [{ authorId: meId }, { visibility: { not: 'private' } }],
+      },
       orderBy: { createdAt: 'desc' },
       take: 50,
       include: this.postInclude(),
@@ -158,18 +173,25 @@ export class PostsService {
     return posts.map((p) => this.format(p as RawPost, meId));
   }
 
-  /** Muro de un usuario (visible solo para él y sus amigos). */
+  /** Muro de un usuario, respetando la visibilidad de cada publicación. */
   async wall(meId: string, username: string) {
     const user = await this.prisma.user.findUnique({
       where: { username },
       select: { id: true },
     });
     if (!user) throw new NotFoundException('Usuario no encontrado');
-    if (!(await this.areFriends(meId, user.id))) {
-      throw new ForbiddenException('Solo los contactos ven este muro');
+
+    // Qué visibilidades puede ver quien mira: uno mismo todo; un amigo lo
+    // público y de amigos; un desconocido solo lo público.
+    let visibility: { in: string[] } | undefined;
+    if (meId !== user.id) {
+      visibility = (await this.areFriends(meId, user.id))
+        ? { in: ['public', 'friends'] }
+        : { in: ['public'] };
     }
+
     const posts = await this.prisma.post.findMany({
-      where: { authorId: user.id },
+      where: { authorId: user.id, ...(visibility ? { visibility } : {}) },
       orderBy: { createdAt: 'desc' },
       take: 50,
       include: this.postInclude(),

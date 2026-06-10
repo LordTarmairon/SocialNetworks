@@ -9,10 +9,13 @@ export interface PublicUser {
 
 export type ReactionType = 'like' | 'love' | 'haha' | 'wow' | 'sad' | 'angry';
 
+export type Visibility = 'public' | 'friends' | 'private';
+
 export interface Post {
   id: string;
   content: string;
   imageUrl: string | null;
+  visibility: Visibility;
   createdAt: string;
   author: PublicUser;
   reactionCount: number;
@@ -61,8 +64,8 @@ export interface StoryGroup {
 
 export const socialApi = {
   feed: () => api.get<Post[]>('/feed'),
-  createPost: (content: string, imageUrl?: string) =>
-    api.post<Post>('/posts', { content, imageUrl }),
+  createPost: (content: string, imageUrl?: string, visibility?: Visibility) =>
+    api.post<Post>('/posts', { content, imageUrl, visibility }),
   deletePost: (id: string) => api.del<{ ok: true }>(`/posts/${id}`),
   react: (id: string, type: ReactionType) =>
     api.post<{ ok: true }>(`/posts/${id}/react`, { type }),

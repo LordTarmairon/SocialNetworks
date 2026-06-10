@@ -151,11 +151,12 @@ model MessageReaction {
 // y stories efímeras.
 // ===========================================================================
 model Post {
-  id        String   @id @default(uuid())
-  authorId  String
-  content   String
-  imageUrl  String?
-  createdAt DateTime @default(now())
+  id         String   @id @default(uuid())
+  authorId   String
+  content    String
+  imageUrl   String?
+  visibility String   @default("friends") // public | friends | private
+  createdAt  DateTime @default(now())
 
   author   User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   comments Comment[]

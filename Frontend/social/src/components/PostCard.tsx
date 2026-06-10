@@ -10,6 +10,12 @@ import {
 } from '../lib/social';
 import { Avatar } from './Avatar';
 
+const VIS_ICON: Record<string, string> = {
+  public: '🌐',
+  friends: '👥',
+  private: '🔒',
+};
+
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
@@ -120,7 +126,9 @@ export function PostCard({ post, canDelete, onDeleted }: Props) {
           <Link className="post-author" to={`/u/${post.author.username}`}>
             {post.author.displayName}
           </Link>
-          <span className="post-time">{timeAgo(post.createdAt)}</span>
+          <span className="post-time">
+            {timeAgo(post.createdAt)} · {VIS_ICON[post.visibility] ?? '👥'}
+          </span>
         </div>
         {canDelete && (
           <button className="post-del" onClick={handleDelete} title="Eliminar">
