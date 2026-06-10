@@ -169,6 +169,7 @@ model Message {
   senderId       String
   content        String
   attachmentUrl  String?
+  attachmentType String?   @default("image") // image | audio
   replyToId      String?
   editedAt       DateTime?
   deleted        Boolean   @default(false)

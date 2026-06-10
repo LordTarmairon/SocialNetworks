@@ -15,7 +15,7 @@ import {
   type MessageReaction,
 } from '../lib/chat';
 import { errorMessage } from '../lib/errors';
-import { mediaUrl, uploadImage } from '../lib/media';
+import { mediaUrl, uploadAudio, uploadImage } from '../lib/media';
 import { presenceText } from '../lib/presence';
 import { ForwardModal } from './ForwardModal';
 import { useSocket } from './SocketContext';
@@ -40,6 +40,9 @@ export function ConversationView({ conversation, meId, onOpenInfo }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const [forwardFor, setForwardFor] = useState<Message | null>(null);
+  const [recording, setRecording] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
   const endRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -183,6 +186,48 @@ export function ConversationView({ conversation, meId, onOpenInfo }: Props) {
     }
   }
 
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const rec = new MediaRecorder(stream);
+      chunksRef.current = [];
+      rec.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(chunksRef.current, {
+          type: rec.mimeType || 'audio/webm',
+        });
+        try {
+          const url = await uploadAudio(blob);
+          socket?.emit('message:send', {
+            conversationId: convId,
+            content: '',
+            attachmentUrl: url,
+            attachmentType: 'audio',
+          });
+        } catch (err) {
+          setError(errorMessage(err));
+        }
+      };
+      recorderRef.current = rec;
+      rec.start();
+      setRecording(true);
+    } catch {
+      setError('No se pudo acceder al micrófono');
+    }
+  }
+
+  function toggleRecord() {
+    if (recording) {
+      recorderRef.current?.stop();
+      setRecording(false);
+    } else {
+      void startRecording();
+    }
+  }
+
   function react(m: Message, emoji: string) {
     if (!socket) return;
     const mine = m.reactions.find((r) => r.userId === meId);
@@ -318,16 +363,23 @@ export function ConversationView({ conversation, meId, onOpenInfo }: Props) {
                           (m.replyTo.attachmentUrl ? '📷 Foto' : '')}
                       </div>
                     )}
-                    {m.attachmentUrl && (
-                      <a
-                        href={mediaUrl(m.attachmentUrl)}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="bubble-image"
-                      >
-                        <img src={mediaUrl(m.attachmentUrl)} alt="adjunto" />
-                      </a>
-                    )}
+                    {m.attachmentUrl &&
+                      (m.attachmentType === 'audio' ? (
+                        <audio
+                          className="bubble-audio"
+                          controls
+                          src={mediaUrl(m.attachmentUrl)}
+                        />
+                      ) : (
+                        <a
+                          href={mediaUrl(m.attachmentUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="bubble-image"
+                        >
+                          <img src={mediaUrl(m.attachmentUrl)} alt="adjunto" />
+                        </a>
+                      ))}
                     {m.content && (
                       <span className="bubble-text">{m.content}</span>
                     )}
@@ -426,10 +478,19 @@ export function ConversationView({ conversation, meId, onOpenInfo }: Props) {
           hidden
           onChange={handleAttach}
         />
+        <button
+          type="button"
+          className={`attach-btn ${recording ? 'recording' : ''}`}
+          title={recording ? 'Detener y enviar' : 'Grabar mensaje de voz'}
+          onClick={toggleRecord}
+        >
+          {recording ? '⏹' : '🎤'}
+        </button>
         <input
-          placeholder="Escribe un mensaje…"
+          placeholder={recording ? 'Grabando…' : 'Escribe un mensaje…'}
           value={text}
           onChange={(e) => handleInput(e.target.value)}
+          disabled={recording}
         />
         <button type="submit" disabled={!text.trim()}>
           Enviar

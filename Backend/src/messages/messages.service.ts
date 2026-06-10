@@ -161,10 +161,13 @@ export class MessagesService {
   private preview(m: {
     content: string;
     attachmentUrl: string | null;
+    attachmentType?: string | null;
     deleted?: boolean;
   }) {
     if (m.deleted) return '🚫 Mensaje eliminado';
-    if (m.attachmentUrl && !m.content) return '📷 Foto';
+    if (m.attachmentUrl && !m.content) {
+      return m.attachmentType === 'audio' ? '🎤 Mensaje de voz' : '📷 Foto';
+    }
     return m.content;
   }
 
@@ -190,6 +193,7 @@ export class MessagesService {
       sender: m.sender ?? null,
       content: m.deleted ? '' : m.content,
       attachmentUrl: m.deleted ? null : m.attachmentUrl,
+      attachmentType: m.deleted ? null : (m.attachmentType ?? 'image'),
       deleted: m.deleted ?? false,
       editedAt: m.editedAt ?? null,
       forwarded: m.forwarded ?? false,
@@ -231,6 +235,7 @@ export class MessagesService {
     attachmentUrl?: string | null,
     replyToId?: string | null,
     forwarded?: boolean,
+    attachmentType?: string | null,
   ) {
     await this.assertParticipant(meId, conversationId);
     const message = await this.prisma.message.create({
@@ -239,6 +244,7 @@ export class MessagesService {
         senderId: meId,
         content,
         attachmentUrl: attachmentUrl ?? null,
+        attachmentType: attachmentUrl ? (attachmentType ?? 'image') : null,
         replyToId: replyToId ?? null,
         forwarded: forwarded ?? false,
       },

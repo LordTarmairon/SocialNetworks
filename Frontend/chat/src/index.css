@@ -947,6 +947,25 @@ body {
   flex-shrink: 0;
   padding: 0 !important;
 }
+.attach-btn.recording {
+  background: #b00020 !important;
+  color: #fff !important;
+  animation: recpulse 1s infinite;
+}
+@keyframes recpulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+.bubble-audio {
+  width: 220px;
+  max-width: 60vw;
+  height: 36px;
+}
 
 /* ---------- Edición de perfil ---------- */
 .profile-edit {
