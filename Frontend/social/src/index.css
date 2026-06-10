@@ -464,16 +464,52 @@ a {
 .story-seg-fill.active {
   animation: storyfill linear forwards;
 }
-.story-reactions {
+.story-footer {
   position: absolute;
-  bottom: 1.2rem;
+  bottom: 1rem;
   left: 50%;
   transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: min(360px, 80%);
+}
+.story-reactions {
   display: flex;
   gap: 0.4rem;
   background: rgba(0, 0, 0, 0.5);
   padding: 0.4rem 0.6rem;
   border-radius: 24px;
+}
+.story-reply {
+  display: flex;
+  gap: 0.4rem;
+  width: 100%;
+}
+.story-reply input {
+  flex: 1;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  border-radius: 20px;
+  padding: 0.5rem 0.9rem;
+  outline: none;
+}
+.story-reply input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+.story-reply button {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  cursor: pointer;
+}
+.story-reply button:disabled {
+  opacity: 0.5;
 }
 .story-react {
   background: none;

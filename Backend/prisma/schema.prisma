@@ -70,9 +70,10 @@ model User {
   blocking  Block[] @relation("Blocking")
   blockedBy Block[] @relation("BlockedBy")
 
-  // Historias: vistas y reacciones.
+  // Historias: vistas, reacciones y respuestas privadas.
   storyViews     StoryView[]     @relation("StoryViews")
   storyReactions StoryReaction[] @relation("StoryReactions")
+  storyComments  StoryComment[]  @relation("StoryComments")
 
   // Seguir (follow), independiente de la amistad.
   following Follow[] @relation("Following")
@@ -299,9 +300,25 @@ model Story {
   author    User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
   views     StoryView[]
   reactions StoryReaction[]
+  comments  StoryComment[]
 
   @@index([authorId])
   @@map("stories")
+}
+
+// Respuesta privada a una historia (solo la ve el autor de la historia).
+model StoryComment {
+  id        String   @id @default(uuid())
+  storyId   String
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user  User  @relation("StoryComments", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([storyId])
+  @@map("story_comments")
 }
 
 model StoryView {

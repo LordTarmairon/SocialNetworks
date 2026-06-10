@@ -51,4 +51,18 @@ export class StoriesController {
   viewers(@CurrentUser() me: AuthUser, @Param('id') id: string) {
     return this.stories.getViewers(me.id, id);
   }
+
+  @Post(':id/comment')
+  comment(
+    @CurrentUser() me: AuthUser,
+    @Param('id') id: string,
+    @Body('content') content: string,
+  ) {
+    return this.stories.comment(me.id, id, content);
+  }
+
+  @Get(':id/comments')
+  comments(@CurrentUser() me: AuthUser, @Param('id') id: string) {
+    return this.stories.listComments(me.id, id);
+  }
 }

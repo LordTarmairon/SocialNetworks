@@ -19,11 +19,17 @@ export function StoriesBar({ groups, onChanged }: Props) {
   const [reacted, setReacted] = useState<Record<string, string | null>>({});
   const [viewersFor, setViewersFor] = useState<string | null>(null);
   const [viewers, setViewers] = useState<StoryViewer[]>([]);
+  const [replyText, setReplyText] = useState('');
+  const [replySent, setReplySent] = useState(false);
+  const [replies, setReplies] = useState<
+    { id: string; content: string; user: { displayName: string } }[]
+  >([]);
 
   const current = viewer ? viewer.stories[index] : null;
 
   // Registrar la vista al mostrar una historia ajena.
   useEffect(() => {
+    setReplyText('');
     if (!current || current.mine) return;
     socialApi.viewStory(current.id).catch(() => {});
   }, [current?.id, current?.mine]);
@@ -83,8 +89,25 @@ export function StoriesBar({ groups, onChanged }: Props) {
   async function openViewers() {
     if (!current) return;
     try {
-      setViewers(await socialApi.storyViewers(current.id));
+      const [vs, cs] = await Promise.all([
+        socialApi.storyViewers(current.id),
+        socialApi.storyComments(current.id),
+      ]);
+      setViewers(vs);
+      setReplies(cs);
       setViewersFor(current.id);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async function sendReply() {
+    if (!current || !replyText.trim()) return;
+    try {
+      await socialApi.commentStory(current.id, replyText.trim());
+      setReplyText('');
+      setReplySent(true);
+      setTimeout(() => setReplySent(false), 2000);
     } catch {
       /* ignore */
     }
@@ -162,18 +185,38 @@ export function StoriesBar({ groups, onChanged }: Props) {
             </button>
           ) : (
             <div
-              className="story-reactions"
+              className="story-footer"
               onClick={(e) => e.stopPropagation()}
             >
-              {STORY_EMOJIS.map((em) => (
-                <button
-                  key={em}
-                  className={`story-react ${myReaction === em ? 'on' : ''}`}
-                  onClick={() => react(em)}
-                >
-                  {em}
+              <div className="story-reactions">
+                {STORY_EMOJIS.map((em) => (
+                  <button
+                    key={em}
+                    className={`story-react ${myReaction === em ? 'on' : ''}`}
+                    onClick={() => react(em)}
+                  >
+                    {em}
+                  </button>
+                ))}
+              </div>
+              <form
+                className="story-reply"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void sendReply();
+                }}
+              >
+                <input
+                  placeholder={
+                    replySent ? '¡Enviado!' : 'Responder en privado…'
+                  }
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                />
+                <button type="submit" disabled={!replyText.trim()}>
+                  ➤
                 </button>
-              ))}
+              </form>
             </div>
           )}
 
@@ -199,6 +242,22 @@ export function StoriesBar({ groups, onChanged }: Props) {
                   </li>
                 ))}
               </ul>
+
+              {replies.length > 0 && (
+                <>
+                  <div className="story-viewers-head" style={{ marginTop: 12 }}>
+                    <strong>Respuestas ({replies.length})</strong>
+                  </div>
+                  <ul>
+                    {replies.map((c) => (
+                      <li key={c.id}>
+                        <strong>{c.user.displayName}:</strong>
+                        <span style={{ marginLeft: 6 }}>{c.content}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           )}
         </div>

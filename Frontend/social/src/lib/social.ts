@@ -130,4 +130,10 @@ export const socialApi = {
   unreactStory: (id: string) => api.del<{ ok: true }>(`/stories/${id}/react`),
   storyViewers: (id: string) =>
     api.get<StoryViewer[]>(`/stories/${id}/viewers`),
+  commentStory: (id: string, content: string) =>
+    api.post<{ id: string }>(`/stories/${id}/comment`, { content }),
+  storyComments: (id: string) =>
+    api.get<{ id: string; content: string; user: PublicUser }[]>(
+      `/stories/${id}/comments`,
+    ),
 };

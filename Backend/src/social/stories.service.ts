@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 const publicUser = {
@@ -20,7 +21,10 @@ const STORY_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
 export class StoriesService {
   private readonly logger = new Logger(StoriesService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /** Borra las stories caducadas cada hora. */
   @Cron(CronExpression.EVERY_HOUR)
@@ -125,6 +129,44 @@ export class StoriesService {
       where: { storyId, userId: meId },
     });
     return { ok: true };
+  }
+
+  /** Respuesta privada a una historia (solo la ve el autor). */
+  async comment(meId: string, storyId: string, content: string) {
+    const story = await this.prisma.story.findUnique({
+      where: { id: storyId },
+      select: { authorId: true },
+    });
+    if (!story) throw new NotFoundException('Historia no encontrada');
+    const c = await this.prisma.storyComment.create({
+      data: { storyId, userId: meId, content },
+      include: { user: { select: publicUser } },
+    });
+    await this.notifications.create(story.authorId, meId, 'comment');
+    return { id: c.id, content: c.content, createdAt: c.createdAt, user: c.user };
+  }
+
+  /** Respuestas privadas de una historia (solo el autor). */
+  async listComments(meId: string, storyId: string) {
+    const story = await this.prisma.story.findUnique({
+      where: { id: storyId },
+      select: { authorId: true },
+    });
+    if (!story) throw new NotFoundException('Historia no encontrada');
+    if (story.authorId !== meId) {
+      throw new ForbiddenException('Solo el autor ve las respuestas');
+    }
+    const comments = await this.prisma.storyComment.findMany({
+      where: { storyId },
+      orderBy: { createdAt: 'asc' },
+      include: { user: { select: publicUser } },
+    });
+    return comments.map((c) => ({
+      id: c.id,
+      content: c.content,
+      createdAt: c.createdAt,
+      user: c.user,
+    }));
   }
 
   /** Lista de quién ha visto una historia (solo el autor) + su reacción. */
