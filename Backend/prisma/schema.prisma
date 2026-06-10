@@ -69,6 +69,10 @@ model User {
   blocking  Block[] @relation("Blocking")
   blockedBy Block[] @relation("BlockedBy")
 
+  // Historias: vistas y reacciones.
+  storyViews     StoryView[]     @relation("StoryViews")
+  storyReactions StoryReaction[] @relation("StoryReactions")
+
   @@map("users")
 }
 
@@ -271,10 +275,41 @@ model Story {
   createdAt DateTime @default(now())
   expiresAt DateTime
 
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author    User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  views     StoryView[]
+  reactions StoryReaction[]
 
   @@index([authorId])
   @@map("stories")
+}
+
+model StoryView {
+  id        String   @id @default(uuid())
+  storyId   String
+  viewerId  String
+  createdAt DateTime @default(now())
+
+  story  Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  viewer User  @relation("StoryViews", fields: [viewerId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, viewerId])
+  @@index([storyId])
+  @@map("story_views")
+}
+
+model StoryReaction {
+  id        String   @id @default(uuid())
+  storyId   String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  story Story @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user  User  @relation("StoryReactions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([storyId, userId])
+  @@index([storyId])
+  @@map("story_reactions")
 }
 
 // ---------------------------------------------------------------------------

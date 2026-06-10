@@ -70,6 +70,15 @@ export interface StoryItem {
   id: string;
   imageUrl: string;
   createdAt: string;
+  mine?: boolean;
+  viewCount?: number;
+  viewedByMe?: boolean;
+  reactionCount?: number;
+  myReaction?: string | null;
+}
+
+export interface StoryViewer extends PublicUser {
+  emoji: string | null;
 }
 
 export interface StoryGroup {
@@ -108,4 +117,10 @@ export const socialApi = {
   stories: () => api.get<StoryGroup[]>('/stories'),
   createStory: (imageUrl: string) =>
     api.post<StoryItem>('/stories', { imageUrl }),
+  viewStory: (id: string) => api.post<{ ok: true }>(`/stories/${id}/view`),
+  reactStory: (id: string, emoji: string) =>
+    api.post<{ ok: true }>(`/stories/${id}/react`, { emoji }),
+  unreactStory: (id: string) => api.del<{ ok: true }>(`/stories/${id}/react`),
+  storyViewers: (id: string) =>
+    api.get<StoryViewer[]>(`/stories/${id}/viewers`),
 };

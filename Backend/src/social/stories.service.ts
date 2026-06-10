@@ -1,4 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -58,10 +63,13 @@ export class StoriesService {
     const stories = await this.prisma.story.findMany({
       where: { authorId: { in: authorIds }, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'asc' },
-      include: { author: { select: publicUser } },
+      include: {
+        author: { select: publicUser },
+        views: { select: { viewerId: true } },
+        reactions: { select: { userId: true, emoji: true } },
+      },
     });
 
-    // Agrupar por autor, con el usuario actual primero.
     const groups = new Map<
       string,
       { author: (typeof stories)[number]['author']; stories: unknown[] }
@@ -74,6 +82,11 @@ export class StoriesService {
         id: s.id,
         imageUrl: s.imageUrl,
         createdAt: s.createdAt,
+        mine: s.authorId === meId,
+        viewCount: s.views.length,
+        viewedByMe: s.views.some((v) => v.viewerId === meId),
+        reactionCount: s.reactions.length,
+        myReaction: s.reactions.find((r) => r.userId === meId)?.emoji ?? null,
       });
     }
     const result = [...groups.values()];
@@ -81,5 +94,64 @@ export class StoriesService {
       a.author.id === meId ? -1 : b.author.id === meId ? 1 : 0,
     );
     return result;
+  }
+
+  /** Registra que el usuario ha visto una historia (no cuenta al autor). */
+  async recordView(meId: string, storyId: string) {
+    const story = await this.prisma.story.findUnique({
+      where: { id: storyId },
+      select: { authorId: true },
+    });
+    if (!story || story.authorId === meId) return { ok: true };
+    await this.prisma.storyView.upsert({
+      where: { storyId_viewerId: { storyId, viewerId: meId } },
+      create: { storyId, viewerId: meId },
+      update: {},
+    });
+    return { ok: true };
+  }
+
+  async reactToStory(meId: string, storyId: string, emoji: string) {
+    await this.prisma.storyReaction.upsert({
+      where: { storyId_userId: { storyId, userId: meId } },
+      create: { storyId, userId: meId, emoji },
+      update: { emoji },
+    });
+    return { ok: true };
+  }
+
+  async unreactStory(meId: string, storyId: string) {
+    await this.prisma.storyReaction.deleteMany({
+      where: { storyId, userId: meId },
+    });
+    return { ok: true };
+  }
+
+  /** Lista de quién ha visto una historia (solo el autor) + su reacción. */
+  async getViewers(meId: string, storyId: string) {
+    const story = await this.prisma.story.findUnique({
+      where: { id: storyId },
+      select: { authorId: true },
+    });
+    if (!story) throw new NotFoundException('Historia no encontrada');
+    if (story.authorId !== meId) {
+      throw new ForbiddenException('Solo el autor ve quién la ha visto');
+    }
+    const [views, reactions] = await Promise.all([
+      this.prisma.storyView.findMany({
+        where: { storyId },
+        orderBy: { createdAt: 'desc' },
+        include: { viewer: { select: publicUser } },
+      }),
+      this.prisma.storyReaction.findMany({
+        where: { storyId },
+        select: { userId: true, emoji: true },
+      }),
+    ]);
+    const reactionByUser = new Map(reactions.map((r) => [r.userId, r.emoji]));
+    return views.map((v) => ({
+      ...v.viewer,
+      emoji: reactionByUser.get(v.viewerId) ?? null,
+    }));
   }
 }
