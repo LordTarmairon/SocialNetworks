@@ -2,9 +2,16 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { ConversationView } from '../chat/ConversationView';
+import { NewGroupModal } from '../chat/NewGroupModal';
 import { useSocket } from '../chat/SocketContext';
 import { Avatar } from '../components/Avatar';
-import { chatApi, type Conversation, type Message } from '../lib/chat';
+import {
+  chatApi,
+  convAvatar,
+  convName,
+  type Conversation,
+  type Message,
+} from '../lib/chat';
 
 export function ChatPage() {
   const { user, logout } = useAuth();
@@ -13,6 +20,7 @@ export function ChatPage() {
   const { id: selectedId } = useParams();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [showGroup, setShowGroup] = useState(false);
 
   const load = useCallback(async () => {
     setConversations(await chatApi.listConversations());
@@ -82,6 +90,13 @@ export function ChatPage() {
             <strong>{user?.displayName}</strong>
           </div>
           <div className="sidebar-actions">
+            <button
+              className="sidebar-link as-button"
+              onClick={() => setShowGroup(true)}
+              title="Crear grupo"
+            >
+              ＋ Grupo
+            </button>
             <Link className="sidebar-link" to="/contacts">
               Contactos
             </Link>
@@ -101,24 +116,27 @@ export function ChatPage() {
               para empezar uno.
             </li>
           )}
-          {conversations.map((c) => (
-            <li
-              key={c.id}
-              className={`conv-row ${c.id === selectedId ? 'active' : ''}`}
-              onClick={() => navigate(`/c/${c.id}`)}
-            >
-              <Avatar
-                name={c.otherUser?.displayName ?? '?'}
-                src={c.otherUser?.avatarUrl}
-              />
-              <div className="conv-info">
-                <span className="conv-name">{c.otherUser?.displayName}</span>
-                <span className="conv-last">
-                  {c.lastMessage?.content ?? 'Sin mensajes aún'}
-                </span>
-              </div>
-            </li>
-          ))}
+          {conversations.map((c) => {
+            const av = convAvatar(c);
+            return (
+              <li
+                key={c.id}
+                className={`conv-row ${c.id === selectedId ? 'active' : ''}`}
+                onClick={() => navigate(`/c/${c.id}`)}
+              >
+                <Avatar name={av.name} src={av.src} />
+                <div className="conv-info">
+                  <span className="conv-name">
+                    {c.isGroup && '👥 '}
+                    {convName(c)}
+                  </span>
+                  <span className="conv-last">
+                    {c.lastMessage?.content ?? 'Sin mensajes aún'}
+                  </span>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </aside>
 
@@ -127,10 +145,21 @@ export function ChatPage() {
           <ConversationView conversation={selected} meId={user.id} />
         ) : (
           <div className="chat-empty">
-            <p>Selecciona un chat o empieza uno desde Contactos 💬</p>
+            <p>Selecciona un chat, crea un grupo o empieza uno desde Contactos 💬</p>
           </div>
         )}
       </section>
+
+      {showGroup && (
+        <NewGroupModal
+          onClose={() => setShowGroup(false)}
+          onCreated={(conv) => {
+            setConversations((prev) => [conv, ...prev]);
+            setShowGroup(false);
+            navigate(`/c/${conv.id}`);
+          }}
+        />
+      )}
     </div>
   );
 }

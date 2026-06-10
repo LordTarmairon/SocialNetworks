@@ -8,6 +8,8 @@ import {
 import { Avatar } from '../components/Avatar';
 import {
   chatApi,
+  convAvatar,
+  convName,
   type Conversation,
   type Message,
   type MessageReaction,
@@ -200,14 +202,21 @@ export function ConversationView({ conversation, meId }: Props) {
     );
   }
 
+  const av = convAvatar(conversation);
+  const headerStatus = conversation.isGroup
+    ? otherTyping
+      ? 'escribiendo…'
+      : `${conversation.members.length} miembros`
+    : statusText || `@${other?.username}`;
+
   return (
     <div className="thread">
       <header className="thread-header">
-        <Avatar name={other?.displayName ?? '?'} src={other?.avatarUrl} size={40} />
+        <Avatar name={av.name} src={av.src} size={40} />
         <div>
-          <div className="thread-name">{other?.displayName ?? 'Chat'}</div>
+          <div className="thread-name">{convName(conversation)}</div>
           <div className={`thread-status ${otherTyping ? 'typing' : ''}`}>
-            {statusText || `@${other?.username}`}
+            {headerStatus}
           </div>
         </div>
       </header>
@@ -219,6 +228,9 @@ export function ConversationView({ conversation, meId }: Props) {
           return (
             <div key={m.id} className={`bubble-row ${mine ? 'mine' : 'theirs'}`}>
               <div className={`bubble ${mine ? 'mine' : 'theirs'}`}>
+                {conversation.isGroup && !mine && m.sender && (
+                  <span className="bubble-sender">{m.sender.displayName}</span>
+                )}
                 {m.replyTo && (
                   <div className="bubble-reply">
                     {m.replyTo.content ||

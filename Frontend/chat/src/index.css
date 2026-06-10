@@ -360,6 +360,124 @@ body {
   font-weight: 600;
   font-size: 0.9rem;
 }
+.sidebar-link.as-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.bubble-sender {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.15rem;
+}
+
+/* ---------- Modal de nuevo grupo ---------- */
+.group-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+.group-modal {
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: 14px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+.group-modal h2 {
+  margin: 0;
+}
+.group-name {
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+}
+.group-name:focus {
+  border-color: var(--primary);
+}
+.group-members-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.group-friends {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.group-friend {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.5rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.group-friend:hover {
+  background: var(--surface-2);
+}
+.group-friend.on {
+  background: rgba(0, 168, 132, 0.15);
+}
+.group-friend span:first-of-type {
+  flex: 1;
+}
+.group-check {
+  color: var(--primary);
+  font-weight: 700;
+}
+.group-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.group-cancel {
+  background: transparent;
+  border: 1px solid var(--surface-2);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+.group-create {
+  background: var(--primary);
+  color: #04231b;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.group-create:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.muted {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
 
 /* ---------- Layout de chat ---------- */
 .chat-layout {

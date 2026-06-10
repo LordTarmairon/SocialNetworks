@@ -110,25 +110,51 @@ export class MessagesService {
       orderBy: { conversation: { updatedAt: 'desc' } },
     });
 
-    return parts.map((p) => {
-      const other = p.conversation.participants.find(
-        (pp) => pp.userId !== meId,
-      )?.user;
-      const last = p.conversation.messages[0];
+    return parts.map((p) => this.buildConvSummary(meId, p.conversation));
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private buildConvSummary(meId: string, conv: any) {
+    const last = conv.messages[0];
+    const lastMessage = last
+      ? {
+          content: this.preview(last),
+          createdAt: last.createdAt,
+          senderId: last.senderId,
+        }
+      : null;
+
+    if (conv.isGroup) {
       return {
-        id: p.conversation.id,
-        otherUser: other ? this.toPublic(other) : null,
-        presence: other ? this.presenceOf(other) : null,
-        lastMessage: last
-          ? {
-              content: this.preview(last),
-              createdAt: last.createdAt,
-              senderId: last.senderId,
-            }
-          : null,
-        updatedAt: p.conversation.updatedAt,
+        id: conv.id,
+        isGroup: true,
+        name: conv.name,
+        imageUrl: conv.imageUrl,
+        otherUser: null,
+        presence: null,
+        members: conv.participants.map(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (pp: any) => this.toPublic(pp.user),
+        ),
+        lastMessage,
+        updatedAt: conv.updatedAt,
       };
-    });
+    }
+
+    const other = conv.participants.find(
+      (pp: { userId: string }) => pp.userId !== meId,
+    )?.user;
+    return {
+      id: conv.id,
+      isGroup: false,
+      name: null,
+      imageUrl: null,
+      otherUser: other ? this.toPublic(other) : null,
+      presence: other ? this.presenceOf(other) : null,
+      members: [],
+      lastMessage,
+      updatedAt: conv.updatedAt,
+    };
   }
 
   /** Texto resumido del último mensaje (para la lista de chats). */
@@ -138,6 +164,7 @@ export class MessagesService {
   }
 
   private readonly messageInclude = {
+    sender: { select: { id: true, displayName: true, avatarUrl: true } },
     replyTo: {
       select: {
         id: true,
@@ -155,6 +182,7 @@ export class MessagesService {
       id: m.id,
       conversationId: m.conversationId,
       senderId: m.senderId,
+      sender: m.sender ?? null,
       content: m.content,
       attachmentUrl: m.attachmentUrl,
       createdAt: m.createdAt,
@@ -319,20 +347,34 @@ export class MessagesService {
         messages: { orderBy: { createdAt: 'desc' }, take: 1 },
       },
     });
-    const other = conv.participants.find((p) => p.userId !== meId)?.user;
-    const last = conv.messages[0];
-    return {
-      id: conv.id,
-      otherUser: other ? this.toPublic(other) : null,
-      presence: other ? this.presenceOf(other) : null,
-      lastMessage: last
-        ? {
-            content: this.preview(last),
-            createdAt: last.createdAt,
-            senderId: last.senderId,
-          }
-        : null,
-      updatedAt: conv.updatedAt,
-    };
+    return this.buildConvSummary(meId, conv);
+  }
+
+  /** Crea un grupo con los contactos indicados (deben ser amigos). */
+  async createGroup(meId: string, name: string, memberIds: string[]) {
+    const friends = new Set(await this.friendIds(meId));
+    const valid = memberIds.filter((id) => friends.has(id) && id !== meId);
+    const ids = [...new Set([meId, ...valid])];
+    if (ids.length < 2) {
+      throw new ForbiddenException('Añade al menos un contacto al grupo');
+    }
+    const conv = await this.prisma.conversation.create({
+      data: {
+        isGroup: true,
+        name: name.trim() || 'Grupo',
+        creatorId: meId,
+        participants: { create: ids.map((userId) => ({ userId })) },
+      },
+    });
+    return this.toSummary(meId, conv.id);
+  }
+
+  /** Salir de un grupo. */
+  async leaveGroup(meId: string, conversationId: string) {
+    await this.assertParticipant(meId, conversationId);
+    await this.prisma.conversationParticipant.deleteMany({
+      where: { conversationId, userId: meId },
+    });
+    return { ok: true };
   }
 }

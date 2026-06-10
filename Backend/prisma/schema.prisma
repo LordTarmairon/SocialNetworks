@@ -88,10 +88,14 @@ model Friendship {
 }
 
 // ---------------------------------------------------------------------------
-// Conversación (1-a-1 por ahora; el modelo soporta grupos en el futuro).
+// Conversación: 1-a-1 o grupo (isGroup + name/imageUrl/creatorId).
 // ---------------------------------------------------------------------------
 model Conversation {
   id        String   @id @default(uuid())
+  isGroup   Boolean  @default(false)
+  name      String?
+  imageUrl  String?
+  creatorId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
