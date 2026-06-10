@@ -35,7 +35,7 @@ export function LoginPage() {
         {error && <div className="auth-error">{error}</div>}
 
         <label className="auth-field">
-          <span>Email o usuario</span>
+          <span>Teléfono o usuario</span>
           <input
             type="text"
             autoComplete="username"

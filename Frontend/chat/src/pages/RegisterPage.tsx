@@ -8,8 +8,7 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     displayName: '',
-    username: '',
-    email: '',
+    phone: '',
     password: '',
   });
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +24,11 @@ export function RegisterPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await register(form);
+      await register({
+        displayName: form.displayName,
+        phone: form.phone,
+        password: form.password,
+      });
       navigate('/');
     } catch (err) {
       setError(errorMessage(err));
@@ -39,7 +42,7 @@ export function RegisterPage() {
       <div className="auth-logo">Palantír</div>
       <form className="auth-card" onSubmit={handleSubmit}>
         <h1 className="auth-title">Crear cuenta</h1>
-        <p className="auth-subtitle">Únete en menos de un minuto</p>
+        <p className="auth-subtitle">Te registras con tu número de teléfono 📱</p>
 
         {error && <div className="auth-error">{error}</div>}
 
@@ -54,23 +57,13 @@ export function RegisterPage() {
         </label>
 
         <label className="auth-field">
-          <span>Usuario</span>
+          <span>Teléfono</span>
           <input
-            type="text"
-            autoComplete="username"
-            value={form.username}
-            onChange={update('username')}
-            required
-          />
-        </label>
-
-        <label className="auth-field">
-          <span>Email</span>
-          <input
-            type="email"
-            autoComplete="email"
-            value={form.email}
-            onChange={update('email')}
+            type="tel"
+            autoComplete="tel"
+            placeholder="+34600000000"
+            value={form.phone}
+            onChange={update('phone')}
             required
           />
         </label>

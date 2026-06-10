@@ -2,7 +2,8 @@ import { api, clearToken, setToken } from '../lib/api';
 
 export interface User {
   id: string;
-  email: string;
+  email?: string | null;
+  phone?: string | null;
   username: string;
   displayName: string;
   avatarUrl?: string | null;
@@ -17,8 +18,9 @@ interface AuthResponse {
 }
 
 export interface RegisterInput {
-  email: string;
-  username: string;
+  email?: string;
+  phone?: string;
+  username?: string;
   displayName: string;
   password: string;
 }
