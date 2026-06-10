@@ -6,11 +6,18 @@ import {
   type FormEvent,
 } from 'react';
 import { Avatar } from '../components/Avatar';
-import { chatApi, type Conversation, type Message } from '../lib/chat';
+import {
+  chatApi,
+  type Conversation,
+  type Message,
+  type MessageReaction,
+} from '../lib/chat';
 import { errorMessage } from '../lib/errors';
 import { mediaUrl, uploadImage } from '../lib/media';
 import { presenceText } from '../lib/presence';
 import { useSocket } from './SocketContext';
+
+const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
 interface Props {
   conversation: Conversation;
@@ -24,6 +31,8 @@ export function ConversationView({ conversation, meId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [otherTyping, setOtherTyping] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -31,10 +40,10 @@ export function ConversationView({ conversation, meId }: Props) {
 
   const convId = conversation.id;
 
-  // Cargar historial y marcar como leído al abrir.
   useEffect(() => {
     let active = true;
     setOtherTyping(false);
+    setReplyTo(null);
     chatApi
       .listMessages(convId)
       .then((m) => {
@@ -48,7 +57,6 @@ export function ConversationView({ conversation, meId }: Props) {
     };
   }, [convId, socket]);
 
-  // Eventos en vivo.
   useEffect(() => {
     if (!socket) return;
 
@@ -57,7 +65,6 @@ export function ConversationView({ conversation, meId }: Props) {
       setMessages((prev) =>
         prev.some((m) => m.id === msg.id) ? prev : [...prev, msg],
       );
-      // Si lo recibimos del otro y estamos viendo el chat, lo marcamos leído.
       if (msg.senderId !== meId) {
         socket.emit('message:read', { conversationId: convId });
       }
@@ -72,6 +79,17 @@ export function ConversationView({ conversation, meId }: Props) {
       );
     };
 
+    const onReaction = (e: {
+      messageId: string;
+      reactions: MessageReaction[];
+    }) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === e.messageId ? { ...m, reactions: e.reactions } : m,
+        ),
+      );
+    };
+
     const onTyping = (e: {
       conversationId: string;
       userId: string;
@@ -81,7 +99,6 @@ export function ConversationView({ conversation, meId }: Props) {
       setOtherTyping(e.typing);
       if (otherTypingTimeout.current) clearTimeout(otherTypingTimeout.current);
       if (e.typing) {
-        // Por seguridad, lo ocultamos solo si dejan de llegar eventos.
         otherTypingTimeout.current = setTimeout(
           () => setOtherTyping(false),
           4000,
@@ -91,15 +108,16 @@ export function ConversationView({ conversation, meId }: Props) {
 
     socket.on('message:new', onNew);
     socket.on('message:read', onRead);
+    socket.on('message:reaction', onReaction);
     socket.on('typing', onTyping);
     return () => {
       socket.off('message:new', onNew);
       socket.off('message:read', onRead);
+      socket.off('message:reaction', onReaction);
       socket.off('typing', onTyping);
     };
   }, [socket, convId, meId]);
 
-  // Auto-scroll al final.
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, otherTyping]);
@@ -118,9 +136,14 @@ export function ConversationView({ conversation, meId }: Props) {
     e.preventDefault();
     const content = text.trim();
     if (!content || !socket) return;
-    socket.emit('message:send', { conversationId: convId, content });
+    socket.emit('message:send', {
+      conversationId: convId,
+      content,
+      replyToId: replyTo?.id,
+    });
     socket.emit('typing', { conversationId: convId, typing: false });
     setText('');
+    setReplyTo(null);
   }
 
   async function handleAttach(e: ChangeEvent<HTMLInputElement>) {
@@ -130,13 +153,14 @@ export function ConversationView({ conversation, meId }: Props) {
     setError(null);
     try {
       const url = await uploadImage(file);
-      // Enviamos la imagen, usando el texto actual como pie de foto (opcional).
       socket.emit('message:send', {
         conversationId: convId,
         content: text.trim(),
         attachmentUrl: url,
+        replyToId: replyTo?.id,
       });
       setText('');
+      setReplyTo(null);
     } catch (err) {
       setError(errorMessage(err));
     } finally {
@@ -145,10 +169,36 @@ export function ConversationView({ conversation, meId }: Props) {
     }
   }
 
+  function react(m: Message, emoji: string) {
+    if (!socket) return;
+    const mine = m.reactions.find((r) => r.userId === meId);
+    if (mine && mine.emoji === emoji) {
+      socket.emit('message:unreact', { messageId: m.id });
+    } else {
+      socket.emit('message:react', { messageId: m.id, emoji });
+    }
+    setPickerFor(null);
+  }
+
   const other = conversation.otherUser;
   const statusText = otherTyping
     ? 'escribiendo…'
     : presenceText(conversation.presence);
+
+  function reactionChips(m: Message) {
+    if (m.reactions.length === 0) return null;
+    const counts: Record<string, number> = {};
+    for (const r of m.reactions) counts[r.emoji] = (counts[r.emoji] ?? 0) + 1;
+    return (
+      <div className="bubble-reactions">
+        {Object.entries(counts).map(([emoji, n]) => (
+          <span key={emoji} className="reaction-chip">
+            {emoji} {n > 1 ? n : ''}
+          </span>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="thread">
@@ -167,39 +217,85 @@ export function ConversationView({ conversation, meId }: Props) {
         {messages.map((m) => {
           const mine = m.senderId === meId;
           return (
-            <div key={m.id} className={`bubble ${mine ? 'mine' : 'theirs'}`}>
-              {m.attachmentUrl && (
-                <a
-                  href={mediaUrl(m.attachmentUrl)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="bubble-image"
-                >
-                  <img src={mediaUrl(m.attachmentUrl)} alt="adjunto" />
-                </a>
-              )}
-              {m.content && <span className="bubble-text">{m.content}</span>}
-              <span className="bubble-meta">
-                <span className="bubble-time">
-                  {new Date(m.createdAt).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-                {mine && (
-                  <span
-                    className={`bubble-check ${m.readAt ? 'read' : ''}`}
-                    title={m.readAt ? 'Visto' : 'Enviado'}
-                  >
-                    {m.readAt ? '✓✓' : '✓'}
-                  </span>
+            <div key={m.id} className={`bubble-row ${mine ? 'mine' : 'theirs'}`}>
+              <div className={`bubble ${mine ? 'mine' : 'theirs'}`}>
+                {m.replyTo && (
+                  <div className="bubble-reply">
+                    {m.replyTo.content ||
+                      (m.replyTo.attachmentUrl ? '📷 Foto' : '')}
+                  </div>
                 )}
-              </span>
+                {m.attachmentUrl && (
+                  <a
+                    href={mediaUrl(m.attachmentUrl)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bubble-image"
+                  >
+                    <img src={mediaUrl(m.attachmentUrl)} alt="adjunto" />
+                  </a>
+                )}
+                {m.content && <span className="bubble-text">{m.content}</span>}
+                <span className="bubble-meta">
+                  <span className="bubble-time">
+                    {new Date(m.createdAt).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                  {mine && (
+                    <span
+                      className={`bubble-check ${m.readAt ? 'read' : ''}`}
+                      title={m.readAt ? 'Visto' : 'Enviado'}
+                    >
+                      {m.readAt ? '✓✓' : '✓'}
+                    </span>
+                  )}
+                </span>
+                {reactionChips(m)}
+              </div>
+
+              <div className="bubble-actions">
+                <button
+                  title="Responder"
+                  onClick={() => setReplyTo(m)}
+                >
+                  ↩
+                </button>
+                <button
+                  title="Reaccionar"
+                  onClick={() =>
+                    setPickerFor((p) => (p === m.id ? null : m.id))
+                  }
+                >
+                  😀
+                </button>
+              </div>
+
+              {pickerFor === m.id && (
+                <div className="msg-react-picker">
+                  {EMOJIS.map((e) => (
+                    <button key={e} onClick={() => react(m, e)}>
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
         <div ref={endRef} />
       </div>
+
+      {replyTo && (
+        <div className="reply-preview">
+          <div className="reply-preview-text">
+            <strong>Respondiendo:</strong>{' '}
+            {replyTo.content || (replyTo.attachmentUrl ? '📷 Foto' : '')}
+          </div>
+          <button onClick={() => setReplyTo(null)}>✕</button>
+        </div>
+      )}
 
       <form className="thread-input" onSubmit={handleSend}>
         <button

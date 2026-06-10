@@ -137,6 +137,45 @@ export class MessagesService {
     return m.content;
   }
 
+  private readonly messageInclude = {
+    replyTo: {
+      select: {
+        id: true,
+        senderId: true,
+        content: true,
+        attachmentUrl: true,
+      },
+    },
+    reactions: { select: { userId: true, emoji: true } },
+  } as const;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private formatMessage(m: any, showReadReceipts: boolean) {
+    return {
+      id: m.id,
+      conversationId: m.conversationId,
+      senderId: m.senderId,
+      content: m.content,
+      attachmentUrl: m.attachmentUrl,
+      createdAt: m.createdAt,
+      readAt: showReadReceipts ? m.readAt : null,
+      replyTo: m.replyTo
+        ? {
+            id: m.replyTo.id,
+            senderId: m.replyTo.senderId,
+            content: m.replyTo.content,
+            attachmentUrl: m.replyTo.attachmentUrl,
+          }
+        : null,
+      reactions: (m.reactions ?? []).map(
+        (r: { userId: string; emoji: string }) => ({
+          userId: r.userId,
+          emoji: r.emoji,
+        }),
+      ),
+    };
+  }
+
   async listMessages(meId: string, conversationId: string) {
     await this.assertParticipant(meId, conversationId);
     const me = await this.getFlags(meId);
@@ -144,17 +183,9 @@ export class MessagesService {
       where: { conversationId },
       orderBy: { createdAt: 'asc' },
       take: 100,
+      include: this.messageInclude,
     });
-    return messages.map((m) => ({
-      id: m.id,
-      conversationId: m.conversationId,
-      senderId: m.senderId,
-      content: m.content,
-      attachmentUrl: m.attachmentUrl,
-      createdAt: m.createdAt,
-      // Reciprocidad: si yo oculto mis "visto", tampoco veo los de los demás.
-      readAt: me.showReadReceipts ? m.readAt : null,
-    }));
+    return messages.map((m) => this.formatMessage(m, me.showReadReceipts));
   }
 
   async sendMessage(
@@ -162,6 +193,7 @@ export class MessagesService {
     conversationId: string,
     content: string,
     attachmentUrl?: string | null,
+    replyToId?: string | null,
   ) {
     await this.assertParticipant(meId, conversationId);
     const message = await this.prisma.message.create({
@@ -170,21 +202,54 @@ export class MessagesService {
         senderId: meId,
         content,
         attachmentUrl: attachmentUrl ?? null,
+        replyToId: replyToId ?? null,
       },
+      include: this.messageInclude,
     });
     await this.prisma.conversation.update({
       where: { id: conversationId },
       data: { updatedAt: new Date() },
     });
-    return {
-      id: message.id,
-      conversationId: message.conversationId,
-      senderId: message.senderId,
-      content: message.content,
-      attachmentUrl: message.attachmentUrl,
-      createdAt: message.createdAt,
-      readAt: null as Date | null,
-    };
+    return this.formatMessage(message, true);
+  }
+
+  /** Reacciona a un mensaje (un emoji por usuario). Devuelve a quién notificar. */
+  async reactToMessage(meId: string, messageId: string, emoji: string) {
+    const msg = await this.prisma.message.findUnique({
+      where: { id: messageId },
+      select: { id: true, conversationId: true },
+    });
+    if (!msg) throw new NotFoundException('Mensaje no encontrado');
+    await this.assertParticipant(meId, msg.conversationId);
+    await this.prisma.messageReaction.upsert({
+      where: { messageId_userId: { messageId, userId: meId } },
+      create: { messageId, userId: meId, emoji },
+      update: { emoji },
+    });
+    return this.reactionState(messageId, msg.conversationId);
+  }
+
+  async unreactToMessage(meId: string, messageId: string) {
+    const msg = await this.prisma.message.findUnique({
+      where: { id: messageId },
+      select: { id: true, conversationId: true },
+    });
+    if (!msg) throw new NotFoundException('Mensaje no encontrado');
+    await this.assertParticipant(meId, msg.conversationId);
+    await this.prisma.messageReaction.deleteMany({
+      where: { messageId, userId: meId },
+    });
+    return this.reactionState(messageId, msg.conversationId);
+  }
+
+  /** Estado de reacciones de un mensaje + participantes a notificar. */
+  private async reactionState(messageId: string, conversationId: string) {
+    const reactions = await this.prisma.messageReaction.findMany({
+      where: { messageId },
+      select: { userId: true, emoji: true },
+    });
+    const notify = await this.participantIds(conversationId);
+    return { messageId, conversationId, reactions, notify };
   }
 
   /**

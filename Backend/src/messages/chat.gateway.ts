@@ -18,6 +18,7 @@ interface SendPayload {
   conversationId: string;
   content: string;
   attachmentUrl?: string;
+  replyToId?: string;
 }
 
 /**
@@ -120,6 +121,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         body.conversationId,
         content,
         attachmentUrl,
+        body.replyToId?.trim() || null,
       );
       const participants = await this.messages.participantIds(
         body.conversationId,
@@ -131,6 +133,55 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     } catch (err) {
       this.logger.warn(`message:send rechazado: ${(err as Error).message}`);
       return { error: 'No se pudo enviar el mensaje' };
+    }
+  }
+
+  /** Reacción a un mensaje (emoji). */
+  @SubscribeMessage('message:react')
+  async onReact(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { messageId: string; emoji: string },
+  ) {
+    const userId = client.data.userId as string | undefined;
+    if (!userId || !body?.messageId || !body?.emoji) return;
+    try {
+      const state = await this.messages.reactToMessage(
+        userId,
+        body.messageId,
+        body.emoji,
+      );
+      for (const pid of state.notify) {
+        this.server.to(`user:${pid}`).emit('message:reaction', {
+          messageId: state.messageId,
+          reactions: state.reactions,
+        });
+      }
+    } catch (err) {
+      this.logger.warn(`message:react rechazado: ${(err as Error).message}`);
+    }
+  }
+
+  /** Quitar la reacción a un mensaje. */
+  @SubscribeMessage('message:unreact')
+  async onUnreact(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { messageId: string },
+  ) {
+    const userId = client.data.userId as string | undefined;
+    if (!userId || !body?.messageId) return;
+    try {
+      const state = await this.messages.unreactToMessage(
+        userId,
+        body.messageId,
+      );
+      for (const pid of state.notify) {
+        this.server.to(`user:${pid}`).emit('message:reaction', {
+          messageId: state.messageId,
+          reactions: state.reactions,
+        });
+      }
+    } catch (err) {
+      this.logger.warn(`message:unreact rechazado: ${(err as Error).message}`);
     }
   }
 

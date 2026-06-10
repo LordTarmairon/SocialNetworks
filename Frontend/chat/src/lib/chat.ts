@@ -14,6 +14,18 @@ export interface Conversation {
   updatedAt: string;
 }
 
+export interface ReplyRef {
+  id: string;
+  senderId: string;
+  content: string;
+  attachmentUrl: string | null;
+}
+
+export interface MessageReaction {
+  userId: string;
+  emoji: string;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -22,6 +34,8 @@ export interface Message {
   attachmentUrl: string | null;
   createdAt: string;
   readAt: string | null;
+  replyTo: ReplyRef | null;
+  reactions: MessageReaction[];
 }
 
 export const chatApi = {

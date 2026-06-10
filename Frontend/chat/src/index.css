@@ -545,6 +545,133 @@ body {
   color: #53bdeb;
 }
 
+/* ---------- Responder + reacciones a mensajes ---------- */
+.bubble-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 78%;
+}
+.bubble-row.mine {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+}
+.bubble-row.theirs {
+  align-self: flex-start;
+}
+.bubble-row .bubble {
+  max-width: 100%;
+}
+
+.bubble-actions {
+  display: flex;
+  gap: 0.1rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.bubble-row:hover .bubble-actions {
+  opacity: 1;
+}
+.bubble-actions button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0.1rem 0.2rem;
+  border-radius: 6px;
+}
+.bubble-actions button:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.bubble-reply {
+  border-left: 3px solid var(--primary);
+  padding: 0.15rem 0.45rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bubble-reactions {
+  display: flex;
+  gap: 0.2rem;
+  margin-top: 0.3rem;
+}
+.reaction-chip {
+  background: var(--bg);
+  border: 1px solid var(--surface-2);
+  border-radius: 12px;
+  padding: 0 0.4rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.msg-react-picker {
+  position: absolute;
+  top: -2.4rem;
+  display: flex;
+  gap: 0.15rem;
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: 18px;
+  padding: 0.25rem 0.45rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  z-index: 6;
+}
+.bubble-row.mine .msg-react-picker {
+  right: 0;
+}
+.bubble-row.theirs .msg-react-picker {
+  left: 2.5rem;
+}
+.msg-react-picker button {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.05rem;
+  transition: transform 0.1s;
+}
+.msg-react-picker button:hover {
+  transform: scale(1.35);
+}
+
+.reply-preview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: var(--surface);
+  border-top: 1px solid var(--surface-2);
+  font-size: 0.85rem;
+}
+.reply-preview-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+}
+.reply-preview strong {
+  color: var(--primary);
+}
+.reply-preview button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+}
+
 /* ---------- Ajustes ---------- */
 .setting-row {
   display: flex;

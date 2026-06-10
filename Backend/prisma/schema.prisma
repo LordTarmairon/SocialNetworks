@@ -38,8 +38,9 @@ model User {
   receivedRequests Friendship[] @relation("ReceivedRequests")
 
   // Mensajería.
-  conversations ConversationParticipant[]
-  messages      Message[]
+  conversations    ConversationParticipant[]
+  messages         Message[]
+  messageReactions MessageReaction[]         @relation("MessageReactions")
 
   // Red social (estilo Tuenti).
   posts    Post[]
@@ -115,14 +116,34 @@ model Message {
   senderId       String
   content        String
   attachmentUrl  String?
+  replyToId      String?
   createdAt      DateTime  @default(now())
   readAt         DateTime?
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  conversation Conversation      @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User              @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  replyTo      Message?          @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies      Message[]         @relation("MessageReplies")
+  reactions    MessageReaction[]
 
   @@index([conversationId, createdAt])
   @@map("messages")
+}
+
+// Reacción a un mensaje (un emoji por usuario y mensaje, estilo Messenger).
+model MessageReaction {
+  id        String   @id @default(uuid())
+  messageId String
+  userId    String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation("MessageReactions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@map("message_reactions")
 }
 
 // ===========================================================================
