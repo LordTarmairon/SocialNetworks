@@ -30,6 +30,11 @@ export class PostsController {
     return this.posts.searchPosts(me.id, q);
   }
 
+  @Get('discover/photos')
+  recommended(@CurrentUser() me: AuthUser) {
+    return this.posts.recommendedPhotos(me.id);
+  }
+
   @Post('posts')
   create(@CurrentUser() me: AuthUser, @Body() dto: CreatePostDto) {
     return this.posts.createPost(me.id, dto);

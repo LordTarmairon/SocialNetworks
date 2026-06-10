@@ -275,6 +275,35 @@ export class PostsService {
     return posts.map((p) => this.format(p as RawPost, meId));
   }
 
+  /** Fotos recomendadas: imágenes públicas de cuentas que aún no sigues/conoces. */
+  async recommendedPhotos(meId: string) {
+    const friends = await this.friendIds(meId);
+    const blocked = await this.blockedIds(meId);
+    const following = (
+      await this.prisma.follow.findMany({
+        where: { followerId: meId },
+        select: { followingId: true },
+      })
+    ).map((f) => f.followingId);
+    const exclude = [meId, ...friends, ...blocked, ...following];
+
+    const posts = await this.prisma.post.findMany({
+      where: {
+        visibility: 'public',
+        imageUrl: { not: null },
+        authorId: { notIn: exclude },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 9,
+      select: {
+        id: true,
+        imageUrl: true,
+        author: { select: publicUser },
+      },
+    });
+    return posts;
+  }
+
   /** Busca publicaciones por texto/hashtag entre las visibles para el usuario. */
   async searchPosts(meId: string, query: string) {
     const q = query.trim();

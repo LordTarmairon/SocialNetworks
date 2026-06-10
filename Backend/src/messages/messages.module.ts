@@ -9,6 +9,6 @@ import { PresenceService } from './presence.service';
   imports: [AuthModule],
   controllers: [MessagesController],
   providers: [MessagesService, ChatGateway, PresenceService],
-  exports: [MessagesService, ChatGateway],
+  exports: [MessagesService, ChatGateway, PresenceService],
 })
 export class MessagesModule {}

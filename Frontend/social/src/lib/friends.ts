@@ -17,10 +17,16 @@ export interface FriendRequest {
   createdAt: string;
 }
 
+export interface Suggestion extends PublicUser {
+  mutual: number;
+}
+
 export const friendsApi = {
   search: (q: string) =>
     api.get<SearchResult[]>(`/users/search?q=${encodeURIComponent(q)}`),
   listFriends: () => api.get<PublicUser[]>('/friends'),
+  onlineFriends: () => api.get<PublicUser[]>('/friends/online'),
+  suggestions: () => api.get<Suggestion[]>('/friends/suggestions'),
   listRequests: () => api.get<FriendRequest[]>('/friends/requests'),
   sendRequest: (addresseeId: string) =>
     api.post<{ ok: true }>('/friends/requests', { addresseeId }),

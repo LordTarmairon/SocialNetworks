@@ -29,6 +29,16 @@ export class FriendsController {
     return this.friends.listFriends(me.id);
   }
 
+  @Get('friends/online')
+  online(@CurrentUser() me: AuthUser) {
+    return this.friends.onlineFriends(me.id);
+  }
+
+  @Get('friends/suggestions')
+  suggestions(@CurrentUser() me: AuthUser) {
+    return this.friends.suggestions(me.id);
+  }
+
   @Get('friends/requests')
   listRequests(@CurrentUser() me: AuthUser) {
     return this.friends.listIncomingRequests(me.id);

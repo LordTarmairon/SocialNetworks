@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { PresenceService } from '../messages/presence.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -26,7 +27,73 @@ export class FriendsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly presence: PresenceService,
   ) {}
+
+  /** Amigos que están conectados ahora mismo. */
+  async onlineFriends(meId: string) {
+    const friends = await this.listFriends(meId);
+    return friends.filter((f) => this.presence.isOnline(f.id));
+  }
+
+  /** "Quizás conozcas": amigos de tus amigos que aún no son contactos. */
+  async suggestions(meId: string) {
+    const myFriends = await this.prisma.friendship.findMany({
+      where: {
+        status: 'ACCEPTED',
+        OR: [{ requesterId: meId }, { addresseeId: meId }],
+      },
+      select: { requesterId: true, addresseeId: true },
+    });
+    const friendIds = myFriends.map((f) =>
+      f.requesterId === meId ? f.addresseeId : f.requesterId,
+    );
+    if (friendIds.length === 0) return [];
+
+    // Amigos de mis amigos.
+    const fof = await this.prisma.friendship.findMany({
+      where: {
+        status: 'ACCEPTED',
+        OR: [
+          { requesterId: { in: friendIds } },
+          { addresseeId: { in: friendIds } },
+        ],
+      },
+      select: { requesterId: true, addresseeId: true },
+    });
+    const friendSet = new Set(friendIds);
+    const exclude = new Set([
+      meId,
+      ...friendIds,
+      ...(await this.blockedIds(meId)),
+    ]);
+    const counts = new Map<string, number>();
+    for (const f of fof) {
+      // El extremo que NO es uno de mis amigos es el candidato (amigo de un amigo).
+      const candidate = friendSet.has(f.requesterId)
+        ? f.addresseeId
+        : f.requesterId;
+      if (!exclude.has(candidate)) {
+        counts.set(candidate, (counts.get(candidate) ?? 0) + 1);
+      }
+    }
+    const ranked = [...counts.entries()]
+      .sort((x, y) => y[1] - x[1])
+      .slice(0, 6)
+      .map(([id, mutual]) => ({ id, mutual }));
+    if (ranked.length === 0) return [];
+
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: ranked.map((r) => r.id) } },
+      select: publicUser,
+    });
+    return ranked
+      .map((r) => {
+        const u = users.find((x) => x.id === r.id);
+        return u ? { ...u, mutual: r.mutual } : null;
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+  }
 
   /** IDs de usuarios bloqueados por mí o que me han bloqueado. */
   async blockedIds(meId: string): Promise<string[]> {

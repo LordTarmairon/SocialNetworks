@@ -9,6 +9,7 @@ import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
 import { NewsWidget } from '../components/NewsWidget';
 import { PostCard } from '../components/PostCard';
+import { SideDiscovery } from '../components/SideDiscovery';
 import { StoriesBar } from '../components/StoriesBar';
 import { TopBar } from '../components/TopBar';
 import { errorMessage } from '../lib/errors';
@@ -84,7 +85,10 @@ export function FeedPage() {
     <>
       <TopBar />
       <div className="page">
-        <NewsWidget />
+        <div className="left-col">
+          <NewsWidget />
+          <SideDiscovery />
+        </div>
         <main className="feed">
           <StoriesBar groups={stories} onChanged={loadStories} />
 

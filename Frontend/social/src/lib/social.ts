@@ -94,6 +94,10 @@ export const socialApi = {
   saved: () => api.get<Post[]>('/me/saved'),
   searchPosts: (q: string) =>
     api.get<Post[]>(`/search/posts?q=${encodeURIComponent(q)}`),
+  discoverPhotos: () =>
+    api.get<{ id: string; imageUrl: string; author: PublicUser }[]>(
+      '/discover/photos',
+    ),
   createPost: (
     content: string,
     imageUrl?: string,
