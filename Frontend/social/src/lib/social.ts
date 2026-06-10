@@ -63,6 +63,7 @@ export interface Profile {
   postCount: number;
   friendCount: number;
   relation: Relation;
+  iBlocked: boolean;
 }
 
 export interface StoryItem {

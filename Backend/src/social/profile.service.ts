@@ -75,6 +75,16 @@ export class ProfileService {
       else relation = 'pending_incoming';
     }
 
+    const iBlocked =
+      meId === user.id
+        ? false
+        : !!(await this.prisma.block.findUnique({
+            where: {
+              blockerId_blockedId: { blockerId: meId, blockedId: user.id },
+            },
+            select: { id: true },
+          }));
+
     return {
       id: user.id,
       username: user.username,
@@ -85,6 +95,7 @@ export class ProfileService {
       postCount,
       friendCount,
       relation,
+      iBlocked,
     };
   }
 }

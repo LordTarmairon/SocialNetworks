@@ -28,14 +28,26 @@ export class FriendsService {
     private readonly notifications: NotificationsService,
   ) {}
 
+  /** IDs de usuarios bloqueados por mí o que me han bloqueado. */
+  async blockedIds(meId: string): Promise<string[]> {
+    const blocks = await this.prisma.block.findMany({
+      where: { OR: [{ blockerId: meId }, { blockedId: meId }] },
+      select: { blockerId: true, blockedId: true },
+    });
+    return blocks.map((b) =>
+      b.blockerId === meId ? b.blockedId : b.blockerId,
+    );
+  }
+
   /** Busca usuarios por username o nombre, anotando la relación con el actual. */
   async search(meId: string, query: string) {
     const q = query.trim();
     if (!q) return [];
 
+    const blocked = await this.blockedIds(meId);
     const users = await this.prisma.user.findMany({
       where: {
-        id: { not: meId },
+        id: { not: meId, notIn: blocked },
         OR: [
           { username: { contains: q, mode: 'insensitive' } },
           { displayName: { contains: q, mode: 'insensitive' } },
@@ -118,6 +130,11 @@ export class FriendsService {
       throw new NotFoundException('Usuario no encontrado');
     }
 
+    const blocked = await this.blockedIds(meId);
+    if (blocked.includes(addresseeId)) {
+      throw new BadRequestException('No puedes agregar a este usuario');
+    }
+
     // ¿Ya existe relación en cualquier dirección?
     const existing = await this.prisma.friendship.findFirst({
       where: {
@@ -169,5 +186,62 @@ export class FriendsService {
     }
     await this.prisma.friendship.delete({ where: { id: requestId } });
     return { ok: true };
+  }
+
+  /** Bloquea a un usuario: elimina amistad/solicitudes y crea el bloqueo. */
+  async block(meId: string, username: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (user.id === meId) {
+      throw new BadRequestException('No puedes bloquearte a ti mismo');
+    }
+    // Eliminamos cualquier amistad o solicitud entre ambos.
+    await this.prisma.friendship.deleteMany({
+      where: {
+        OR: [
+          { requesterId: meId, addresseeId: user.id },
+          { requesterId: user.id, addresseeId: meId },
+        ],
+      },
+    });
+    await this.prisma.block.upsert({
+      where: { blockerId_blockedId: { blockerId: meId, blockedId: user.id } },
+      create: { blockerId: meId, blockedId: user.id },
+      update: {},
+    });
+    return { ok: true };
+  }
+
+  async unblock(meId: string, username: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+      select: { id: true },
+    });
+    if (!user) throw new NotFoundException('Usuario no encontrado');
+    await this.prisma.block.deleteMany({
+      where: { blockerId: meId, blockedId: user.id },
+    });
+    return { ok: true };
+  }
+
+  async listBlocked(meId: string) {
+    const blocks = await this.prisma.block.findMany({
+      where: { blockerId: meId },
+      include: { blocked: { select: publicUser } },
+      orderBy: { createdAt: 'desc' },
+    });
+    return blocks.map((b) => b.blocked);
+  }
+
+  /** ¿He bloqueado yo a este usuario? */
+  async hasBlocked(meId: string, otherId: string): Promise<boolean> {
+    const b = await this.prisma.block.findUnique({
+      where: { blockerId_blockedId: { blockerId: meId, blockedId: otherId } },
+      select: { id: true },
+    });
+    return !!b;
   }
 }

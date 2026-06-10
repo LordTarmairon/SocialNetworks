@@ -28,4 +28,9 @@ export const friendsApi = {
     api.post<{ ok: true }>(`/friends/requests/${requestId}/accept`),
   reject: (requestId: string) =>
     api.del<{ ok: true }>(`/friends/requests/${requestId}`),
+  block: (username: string) =>
+    api.post<{ ok: true }>(`/users/${username}/block`),
+  unblock: (username: string) =>
+    api.del<{ ok: true }>(`/users/${username}/block`),
+  listBlocked: () => api.get<PublicUser[]>('/me/blocked'),
 };

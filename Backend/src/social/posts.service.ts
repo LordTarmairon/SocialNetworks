@@ -76,6 +76,15 @@ export class PostsService {
     return !!f;
   }
 
+  /** IDs bloqueados por mí o que me bloquean. */
+  private async blockedIds(meId: string): Promise<string[]> {
+    const blocks = await this.prisma.block.findMany({
+      where: { OR: [{ blockerId: meId }, { blockedId: meId }] },
+      select: { blockerId: true, blockedId: true },
+    });
+    return blocks.map((b) => (b.blockerId === meId ? b.blockedId : b.blockerId));
+  }
+
   private async friendIds(userId: string): Promise<string[]> {
     const fs = await this.prisma.friendship.findMany({
       where: {
@@ -259,9 +268,11 @@ export class PostsService {
     const q = query.trim();
     if (!q) return [];
     const friendIds = await this.friendIds(meId);
+    const blocked = await this.blockedIds(meId);
     const posts = await this.prisma.post.findMany({
       where: {
         content: { contains: q, mode: 'insensitive' },
+        authorId: { notIn: blocked },
         OR: [
           { authorId: meId },
           { authorId: { in: friendIds }, visibility: { not: 'private' } },
@@ -282,6 +293,10 @@ export class PostsService {
       select: { id: true },
     });
     if (!user) throw new NotFoundException('Usuario no encontrado');
+
+    if ((await this.blockedIds(meId)).includes(user.id)) {
+      throw new ForbiddenException('No puedes ver este muro');
+    }
 
     // Qué visibilidades puede ver quien mira: uno mismo todo; un amigo lo
     // público y de amigos; un desconocido solo lo público.

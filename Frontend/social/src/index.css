@@ -817,6 +817,16 @@ a {
 .profile-links {
   margin: 0.25rem 0 0.5rem;
 }
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+}
+.profile-block-btn {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+}
 
 /* ---------- Álbumes ---------- */
 .album-grid {

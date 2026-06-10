@@ -48,4 +48,19 @@ export class FriendsController {
   remove(@CurrentUser() me: AuthUser, @Param('id') id: string) {
     return this.friends.removeRelation(me.id, id);
   }
+
+  @Get('me/blocked')
+  blocked(@CurrentUser() me: AuthUser) {
+    return this.friends.listBlocked(me.id);
+  }
+
+  @Post('users/:username/block')
+  block(@CurrentUser() me: AuthUser, @Param('username') username: string) {
+    return this.friends.block(me.id, username);
+  }
+
+  @Delete('users/:username/block')
+  unblock(@CurrentUser() me: AuthUser, @Param('username') username: string) {
+    return this.friends.unblock(me.id, username);
+  }
 }

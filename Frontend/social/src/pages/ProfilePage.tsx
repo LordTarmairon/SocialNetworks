@@ -6,6 +6,7 @@ import { EditProfile } from '../components/EditProfile';
 import { PostCard } from '../components/PostCard';
 import { TopBar } from '../components/TopBar';
 import { errorMessage } from '../lib/errors';
+import { friendsApi } from '../lib/friends';
 import { socialApi, type Post, type Profile } from '../lib/social';
 
 const relationLabel: Record<Profile['relation'], string> = {
@@ -84,9 +85,36 @@ export function ProfilePage() {
                   Editar perfil
                 </button>
               ) : (
-                <span className="profile-relation">
-                  {relationLabel[profile.relation]}
-                </span>
+                <div className="profile-actions">
+                  <span className="profile-relation">
+                    {relationLabel[profile.relation]}
+                  </span>
+                  <button
+                    className="btn-ghost profile-block-btn"
+                    onClick={async () => {
+                      try {
+                        if (profile.iBlocked) {
+                          await friendsApi.unblock(profile.username);
+                        } else {
+                          if (
+                            !window.confirm(
+                              `¿Bloquear a ${profile.displayName}?`,
+                            )
+                          )
+                            return;
+                          await friendsApi.block(profile.username);
+                        }
+                        const p = await socialApi.profile(profile.username);
+                        setProfile(p);
+                        if (p.iBlocked) setPosts([]);
+                      } catch (err) {
+                        setError(errorMessage(err));
+                      }
+                    }}
+                  >
+                    {profile.iBlocked ? 'Desbloquear' : 'Bloquear'}
+                  </button>
+                </div>
               )}
             </div>
           </section>
