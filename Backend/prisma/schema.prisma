@@ -61,9 +61,10 @@ model User {
   attendances  Attendance[] @relation("Attendances")
 
   // Fotos y álbumes.
-  albums    Album[]    @relation("AlbumsOwned")
-  photos    Photo[]    @relation("PhotosOwned")
-  photoTags PhotoTag[] @relation("PhotoTags")
+  albums        Album[]        @relation("AlbumsOwned")
+  photos        Photo[]        @relation("PhotosOwned")
+  photoTags     PhotoTag[]     @relation("PhotoTags")
+  photoComments PhotoComment[] @relation("PhotoComments")
 
   // Bloqueos.
   blocking  Block[] @relation("Blocking")
@@ -429,9 +430,10 @@ model Photo {
   caption   String?
   createdAt DateTime @default(now())
 
-  album Album?     @relation(fields: [albumId], references: [id], onDelete: Cascade)
-  owner User       @relation("PhotosOwned", fields: [ownerId], references: [id], onDelete: Cascade)
-  tags  PhotoTag[]
+  album    Album?         @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  owner    User           @relation("PhotosOwned", fields: [ownerId], references: [id], onDelete: Cascade)
+  tags     PhotoTag[]
+  comments PhotoComment[]
 
   @@index([albumId])
   @@map("photos")
@@ -453,4 +455,19 @@ model PhotoTag {
   @@unique([photoId, userId])
   @@index([photoId])
   @@map("photo_tags")
+}
+
+// Comentario en una foto.
+model PhotoComment {
+  id        String   @id @default(uuid())
+  photoId   String
+  authorId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  photo  Photo @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  author User  @relation("PhotoComments", fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([photoId, createdAt])
+  @@map("photo_comments")
 }

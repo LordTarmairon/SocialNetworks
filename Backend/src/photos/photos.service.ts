@@ -207,6 +207,42 @@ export class PhotosService {
     return this.getPhoto(photoId);
   }
 
+  // ---- Comentarios de foto -------------------------------------------------
+
+  async listComments(photoId: string) {
+    const comments = await this.prisma.photoComment.findMany({
+      where: { photoId },
+      orderBy: { createdAt: 'asc' },
+      include: { author: { select: publicUser } },
+    });
+    return comments.map((c) => ({
+      id: c.id,
+      content: c.content,
+      createdAt: c.createdAt,
+      author: c.author,
+    }));
+  }
+
+  async addComment(meId: string, photoId: string, content: string) {
+    const photo = await this.prisma.photo.findUnique({
+      where: { id: photoId },
+      select: { id: true, ownerId: true },
+    });
+    if (!photo) throw new NotFoundException('Foto no encontrada');
+    const comment = await this.prisma.photoComment.create({
+      data: { photoId, authorId: meId, content },
+      include: { author: { select: publicUser } },
+    });
+    await this.notifications.create(photo.ownerId, meId, 'comment');
+    await this.notifyMentions(content, meId);
+    return {
+      id: comment.id,
+      content: comment.content,
+      createdAt: comment.createdAt,
+      author: comment.author,
+    };
+  }
+
   /** Notifica a los @mencionados en un pie de foto. */
   private async notifyMentions(text: string, authorId: string) {
     const usernames = [

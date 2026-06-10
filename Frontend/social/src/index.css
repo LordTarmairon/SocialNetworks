@@ -1085,18 +1085,55 @@ a {
 }
 .tag-label {
   position: absolute;
-  top: 120%;
+  top: 150%;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.78);
+  background: rgba(20, 20, 20, 0.55);
+  backdrop-filter: blur(2px);
   color: #fff;
   font-size: 0.75rem;
   white-space: nowrap;
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 3px 9px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 4px;
+}
+/* Pico del bocadillo apuntando al punto de la etiqueta. */
+.tag-label::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: rgba(20, 20, 20, 0.55);
+}
+.tag-hint {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 14px;
+  white-space: nowrap;
+}
+.photo-comments {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.photo-comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 180px;
+  overflow-y: auto;
 }
 .tag-link {
   color: #fff;

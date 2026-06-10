@@ -36,6 +36,13 @@ export interface Album {
   photos: Photo[];
 }
 
+export interface PhotoComment {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: PublicUser;
+}
+
 export const photosApi = {
   listAlbums: (username: string) =>
     api.get<AlbumSummary[]>(`/users/${username}/albums`),
@@ -55,4 +62,9 @@ export const photosApi = {
     api.post<Photo>(`/photos/${photoId}/tags`, { userId, x, y }),
   removeTag: (photoId: string, tagId: string) =>
     api.del<Photo>(`/photos/${photoId}/tags/${tagId}`),
+
+  comments: (photoId: string) =>
+    api.get<PhotoComment[]>(`/photos/${photoId}/comments`),
+  addComment: (photoId: string, content: string) =>
+    api.post<PhotoComment>(`/photos/${photoId}/comments`, { content }),
 };

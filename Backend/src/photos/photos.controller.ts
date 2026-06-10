@@ -58,6 +58,20 @@ export class PhotosController {
     return this.photos.getPhoto(id);
   }
 
+  @Get('photos/:id/comments')
+  comments(@Param('id') id: string) {
+    return this.photos.listComments(id);
+  }
+
+  @Post('photos/:id/comments')
+  addComment(
+    @CurrentUser() me: AuthUser,
+    @Param('id') id: string,
+    @Body('content') content: string,
+  ) {
+    return this.photos.addComment(me.id, id, content);
+  }
+
   @Patch('photos/:id')
   updateCaption(
     @CurrentUser() me: AuthUser,

@@ -1,11 +1,18 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type MouseEvent,
+} from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { errorMessage } from '../lib/errors';
 import { friendsApi } from '../lib/friends';
 import { mediaUrl } from '../lib/media';
-import { photosApi, type Photo } from '../lib/photos';
+import { photosApi, type Photo, type PhotoComment } from '../lib/photos';
 import type { PublicUser } from '../lib/social';
+import { Avatar } from './Avatar';
 import { MentionText } from './MentionText';
 
 interface Props {
@@ -23,6 +30,9 @@ export function PhotoViewer({ photo: initial, onClose, onChanged }: Props) {
   const [query, setQuery] = useState('');
   const [editingCaption, setEditingCaption] = useState(false);
   const [captionText, setCaptionText] = useState(initial.caption ?? '');
+  const [showTags, setShowTags] = useState(false);
+  const [comments, setComments] = useState<PhotoComment[]>([]);
+  const [commentText, setCommentText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -32,13 +42,34 @@ export function PhotoViewer({ photo: initial, onClose, onChanged }: Props) {
     friendsApi.listFriends().then(setFriends).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    photosApi.comments(photo.id).then(setComments).catch(() => {});
+  }, [photo.id]);
+
   function update(p: Photo) {
     setPhoto(p);
     onChanged(p);
   }
 
+  async function submitComment(e: FormEvent) {
+    e.preventDefault();
+    const content = commentText.trim();
+    if (!content) return;
+    try {
+      const c = await photosApi.addComment(photo.id, content);
+      setComments((prev) => [...prev, c]);
+      setCommentText('');
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  }
+
   function onImageClick(e: MouseEvent<HTMLDivElement>) {
-    if (!tagMode) return;
+    // Sin modo etiqueta: un clic muestra/oculta las etiquetas.
+    if (!tagMode) {
+      if (photo.tags.length > 0) setShowTags((s) => !s);
+      return;
+    }
     const img = imgRef.current;
     const rect = img ? img.getBoundingClientRect() : null;
     if (!rect || !rect.width || !rect.height) return;
@@ -114,10 +145,16 @@ export function PhotoViewer({ photo: initial, onClose, onChanged }: Props) {
           >
           <img ref={imgRef} src={mediaUrl(photo.url)} alt="" />
 
-          {/* Marcadores de etiquetas */}
-          {photo.tags
-            .filter((t) => t.x != null && t.y != null)
-            .map((t) => (
+          {/* Pista para ver etiquetas */}
+          {!tagMode && !showTags && photo.tags.length > 0 && (
+            <span className="tag-hint">🏷️ Toca la foto para ver las etiquetas</span>
+          )}
+
+          {/* Marcadores de etiquetas (al activar con un clic o en modo etiquetar) */}
+          {(showTags || tagMode) &&
+            photo.tags
+              .filter((t) => t.x != null && t.y != null)
+              .map((t) => (
               <div
                 key={t.id}
                 className="tag-marker"
@@ -244,6 +281,41 @@ export function PhotoViewer({ photo: initial, onClose, onChanged }: Props) {
           >
             {tagMode ? 'Toca la foto para etiquetar…' : '🏷️ Etiquetar a alguien'}
           </button>
+
+          {/* Comentarios de la foto */}
+          <div className="photo-comments">
+            <strong>Comentarios ({comments.length})</strong>
+            <div className="photo-comments-list">
+              {comments.map((c) => (
+                <div key={c.id} className="comment">
+                  <Avatar
+                    name={c.author.displayName}
+                    src={c.author.avatarUrl}
+                    size={28}
+                  />
+                  <div className="comment-body">
+                    <Link
+                      className="comment-author"
+                      to={`/u/${c.author.username}`}
+                    >
+                      {c.author.displayName}
+                    </Link>
+                    <MentionText text={c.content} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <form className="comment-form" onSubmit={submitComment}>
+              <input
+                placeholder="Escribe un comentario…"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+              />
+              <button type="submit" disabled={!commentText.trim()}>
+                Enviar
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
