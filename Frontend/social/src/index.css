@@ -268,10 +268,59 @@ a {
 }
 .story-viewer-name {
   position: absolute;
-  top: 1rem;
+  top: 1.6rem;
   left: 1rem;
   color: #fff;
   font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+.story-viewer-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0, 0, 0, 0.4);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  z-index: 3;
+}
+.story-progress {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.8rem;
+  right: 0.8rem;
+  display: flex;
+  gap: 4px;
+  z-index: 2;
+}
+.story-seg {
+  flex: 1;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.story-seg-fill {
+  height: 100%;
+  width: 0;
+  background: #fff;
+}
+.story-seg-fill.done {
+  width: 100%;
+}
+.story-seg-fill.active {
+  animation: storyfill linear forwards;
+}
+@keyframes storyfill {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
 }
 
 /* ---------- Composer ---------- */
@@ -455,7 +504,7 @@ a {
   position: absolute;
   bottom: 100%;
   left: 0;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   display: flex;
   gap: 0.15rem;
   background: var(--card);
@@ -464,6 +513,15 @@ a {
   padding: 0.25rem 0.4rem;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
   z-index: 5;
+}
+/* Puente invisible que cubre el hueco hasta el botón, para no perder el hover. */
+.react-picker::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 10px;
 }
 .react-opt {
   background: none;
@@ -885,6 +943,13 @@ a {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+.tag-link {
+  color: #fff;
+  text-decoration: none;
+}
+.tag-link:hover {
+  text-decoration: underline;
 }
 .tag-remove {
   background: none;

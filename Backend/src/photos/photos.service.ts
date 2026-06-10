@@ -93,12 +93,21 @@ export class PhotosService {
   ) {
     const album = await this.prisma.album.findUnique({
       where: { id: albumId },
-      select: { ownerId: true },
+      select: { ownerId: true, title: true },
     });
     if (!album) throw new NotFoundException('Álbum no encontrado');
     if (album.ownerId !== meId) throw new ForbiddenException('No es tu álbum');
     const photo = await this.prisma.photo.create({
       data: { albumId, ownerId: meId, url, caption: caption ?? null },
+    });
+    // La foto aparece también en la actividad (feed/muro) como publicación.
+    await this.prisma.post.create({
+      data: {
+        authorId: meId,
+        content: caption?.trim() || `📷 Nueva foto en "${album.title}"`,
+        imageUrl: url,
+        visibility: 'friends',
+      },
     });
     if (caption) await this.notifyMentions(caption, meId);
     return this.getPhoto(photo.id);

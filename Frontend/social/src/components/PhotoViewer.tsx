@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { errorMessage } from '../lib/errors';
 import { friendsApi } from '../lib/friends';
@@ -80,7 +81,19 @@ export function PhotoViewer({ photo: initial, onClose, onChanged }: Props) {
   }
 
   const alreadyTagged = new Set(photo.tags.map((t) => t.user.id));
-  const candidates = friends.filter(
+  // Puedes etiquetarte a ti mismo además de a tus contactos.
+  const taggable: PublicUser[] = user
+    ? [
+        {
+          id: user.id,
+          username: user.username,
+          displayName: `${user.displayName} (tú)`,
+          avatarUrl: user.avatarUrl ?? null,
+        },
+        ...friends,
+      ]
+    : friends;
+  const candidates = taggable.filter(
     (f) =>
       !alreadyTagged.has(f.id) &&
       (f.displayName.toLowerCase().includes(query.toLowerCase()) ||
@@ -112,7 +125,13 @@ export function PhotoViewer({ photo: initial, onClose, onChanged }: Props) {
               >
                 <span className="tag-dot" />
                 <span className="tag-label">
-                  {t.user.displayName}
+                  <Link
+                    className="tag-link"
+                    to={`/u/${t.user.username}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {t.user.displayName}
+                  </Link>
                   {(isOwner || t.user.id === user?.id) && (
                     <button
                       className="tag-remove"
