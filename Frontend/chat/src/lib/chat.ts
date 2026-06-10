@@ -43,6 +43,8 @@ export interface Message {
   sender: MessageSender | null;
   content: string;
   attachmentUrl: string | null;
+  deleted: boolean;
+  editedAt: string | null;
   createdAt: string;
   readAt: string | null;
   replyTo: ReplyRef | null;

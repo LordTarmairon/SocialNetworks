@@ -35,6 +35,8 @@ export function ConversationView({ conversation, meId }: Props) {
   const [uploading, setUploading] = useState(false);
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [pickerFor, setPickerFor] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,6 +94,11 @@ export function ConversationView({ conversation, meId }: Props) {
       );
     };
 
+    const onUpdated = (msg: Message) => {
+      if (msg.conversationId !== convId) return;
+      setMessages((prev) => prev.map((m) => (m.id === msg.id ? msg : m)));
+    };
+
     const onTyping = (e: {
       conversationId: string;
       userId: string;
@@ -111,11 +118,13 @@ export function ConversationView({ conversation, meId }: Props) {
     socket.on('message:new', onNew);
     socket.on('message:read', onRead);
     socket.on('message:reaction', onReaction);
+    socket.on('message:updated', onUpdated);
     socket.on('typing', onTyping);
     return () => {
       socket.off('message:new', onNew);
       socket.off('message:read', onRead);
       socket.off('message:reaction', onReaction);
+      socket.off('message:updated', onUpdated);
       socket.off('typing', onTyping);
     };
   }, [socket, convId, meId]);
@@ -182,6 +191,26 @@ export function ConversationView({ conversation, meId }: Props) {
     setPickerFor(null);
   }
 
+  function startEdit(m: Message) {
+    setEditingId(m.id);
+    setEditText(m.content);
+  }
+
+  function saveEdit() {
+    if (!socket || !editingId) return;
+    const c = editText.trim();
+    if (c) socket.emit('message:edit', { messageId: editingId, content: c });
+    setEditingId(null);
+    setEditText('');
+  }
+
+  function deleteMsg(m: Message) {
+    if (!socket) return;
+    if (window.confirm('¿Borrar este mensaje para todos?')) {
+      socket.emit('message:delete', { messageId: m.id });
+    }
+  }
+
   const other = conversation.otherUser;
   const statusText = otherTyping
     ? 'escribiendo…'
@@ -227,62 +256,109 @@ export function ConversationView({ conversation, meId }: Props) {
           const mine = m.senderId === meId;
           return (
             <div key={m.id} className={`bubble-row ${mine ? 'mine' : 'theirs'}`}>
-              <div className={`bubble ${mine ? 'mine' : 'theirs'}`}>
+              <div
+                className={`bubble ${mine ? 'mine' : 'theirs'} ${
+                  m.deleted ? 'deleted' : ''
+                }`}
+              >
                 {conversation.isGroup && !mine && m.sender && (
                   <span className="bubble-sender">{m.sender.displayName}</span>
                 )}
-                {m.replyTo && (
-                  <div className="bubble-reply">
-                    {m.replyTo.content ||
-                      (m.replyTo.attachmentUrl ? '📷 Foto' : '')}
-                  </div>
-                )}
-                {m.attachmentUrl && (
-                  <a
-                    href={mediaUrl(m.attachmentUrl)}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bubble-image"
-                  >
-                    <img src={mediaUrl(m.attachmentUrl)} alt="adjunto" />
-                  </a>
-                )}
-                {m.content && <span className="bubble-text">{m.content}</span>}
-                <span className="bubble-meta">
-                  <span className="bubble-time">
-                    {new Date(m.createdAt).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+
+                {m.deleted ? (
+                  <span className="bubble-text deleted-text">
+                    🚫 Mensaje eliminado
                   </span>
-                  {mine && (
-                    <span
-                      className={`bubble-check ${m.readAt ? 'read' : ''}`}
-                      title={m.readAt ? 'Visto' : 'Enviado'}
-                    >
-                      {m.readAt ? '✓✓' : '✓'}
+                ) : editingId === m.id ? (
+                  <form
+                    className="bubble-edit"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      saveEdit();
+                    }}
+                  >
+                    <input
+                      autoFocus
+                      value={editText}
+                      onChange={(e) => setEditText(e.target.value)}
+                    />
+                    <div className="bubble-edit-actions">
+                      <button type="button" onClick={() => setEditingId(null)}>
+                        Cancelar
+                      </button>
+                      <button type="submit">Guardar</button>
+                    </div>
+                  </form>
+                ) : (
+                  <>
+                    {m.replyTo && (
+                      <div className="bubble-reply">
+                        {m.replyTo.content ||
+                          (m.replyTo.attachmentUrl ? '📷 Foto' : '')}
+                      </div>
+                    )}
+                    {m.attachmentUrl && (
+                      <a
+                        href={mediaUrl(m.attachmentUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="bubble-image"
+                      >
+                        <img src={mediaUrl(m.attachmentUrl)} alt="adjunto" />
+                      </a>
+                    )}
+                    {m.content && (
+                      <span className="bubble-text">{m.content}</span>
+                    )}
+                    <span className="bubble-meta">
+                      {m.editedAt && (
+                        <span className="bubble-edited">editado</span>
+                      )}
+                      <span className="bubble-time">
+                        {new Date(m.createdAt).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </span>
+                      {mine && (
+                        <span
+                          className={`bubble-check ${m.readAt ? 'read' : ''}`}
+                          title={m.readAt ? 'Visto' : 'Enviado'}
+                        >
+                          {m.readAt ? '✓✓' : '✓'}
+                        </span>
+                      )}
                     </span>
-                  )}
-                </span>
-                {reactionChips(m)}
+                  </>
+                )}
+                {!m.deleted && reactionChips(m)}
               </div>
 
-              <div className="bubble-actions">
-                <button
-                  title="Responder"
-                  onClick={() => setReplyTo(m)}
-                >
-                  ↩
-                </button>
-                <button
-                  title="Reaccionar"
-                  onClick={() =>
-                    setPickerFor((p) => (p === m.id ? null : m.id))
-                  }
-                >
-                  😀
-                </button>
-              </div>
+              {!m.deleted && editingId !== m.id && (
+                <div className="bubble-actions">
+                  <button title="Responder" onClick={() => setReplyTo(m)}>
+                    ↩
+                  </button>
+                  <button
+                    title="Reaccionar"
+                    onClick={() =>
+                      setPickerFor((p) => (p === m.id ? null : m.id))
+                    }
+                  >
+                    😀
+                  </button>
+                  {mine && (
+                    <button title="Editar" onClick={() => startEdit(m)}>
+                      ✏️
+                    </button>
+                  )}
+                  {mine && (
+                    <button title="Borrar" onClick={() => deleteMsg(m)}>
+                      🗑️
+                    </button>
+                  )}
+                </div>
+              )}
 
               {pickerFor === m.id && (
                 <div className="msg-react-picker">

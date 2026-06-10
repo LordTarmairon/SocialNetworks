@@ -185,6 +185,50 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  /** Editar un mensaje propio. */
+  @SubscribeMessage('message:edit')
+  async onEdit(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { messageId: string; content: string },
+  ) {
+    const userId = client.data.userId as string | undefined;
+    const content = (body?.content ?? '').trim();
+    if (!userId || !body?.messageId || !content) return;
+    try {
+      const { message, notify } = await this.messages.editMessage(
+        userId,
+        body.messageId,
+        content,
+      );
+      for (const pid of notify) {
+        this.server.to(`user:${pid}`).emit('message:updated', message);
+      }
+    } catch (err) {
+      this.logger.warn(`message:edit rechazado: ${(err as Error).message}`);
+    }
+  }
+
+  /** Borrar un mensaje propio. */
+  @SubscribeMessage('message:delete')
+  async onDelete(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { messageId: string },
+  ) {
+    const userId = client.data.userId as string | undefined;
+    if (!userId || !body?.messageId) return;
+    try {
+      const { message, notify } = await this.messages.deleteMessage(
+        userId,
+        body.messageId,
+      );
+      for (const pid of notify) {
+        this.server.to(`user:${pid}`).emit('message:updated', message);
+      }
+    } catch (err) {
+      this.logger.warn(`message:delete rechazado: ${(err as Error).message}`);
+    }
+  }
+
   /** El usuario abrió/leyó una conversación: marcamos como leídos. */
   @SubscribeMessage('message:read')
   async onRead(

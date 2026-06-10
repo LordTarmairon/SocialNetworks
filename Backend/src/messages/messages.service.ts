@@ -158,7 +158,12 @@ export class MessagesService {
   }
 
   /** Texto resumido del último mensaje (para la lista de chats). */
-  private preview(m: { content: string; attachmentUrl: string | null }) {
+  private preview(m: {
+    content: string;
+    attachmentUrl: string | null;
+    deleted?: boolean;
+  }) {
+    if (m.deleted) return '🚫 Mensaje eliminado';
     if (m.attachmentUrl && !m.content) return '📷 Foto';
     return m.content;
   }
@@ -183,8 +188,10 @@ export class MessagesService {
       conversationId: m.conversationId,
       senderId: m.senderId,
       sender: m.sender ?? null,
-      content: m.content,
-      attachmentUrl: m.attachmentUrl,
+      content: m.deleted ? '' : m.content,
+      attachmentUrl: m.deleted ? null : m.attachmentUrl,
+      deleted: m.deleted ?? false,
+      editedAt: m.editedAt ?? null,
       createdAt: m.createdAt,
       readAt: showReadReceipts ? m.readAt : null,
       replyTo: m.replyTo
@@ -239,6 +246,44 @@ export class MessagesService {
       data: { updatedAt: new Date() },
     });
     return this.formatMessage(message, true);
+  }
+
+  /** Edita un mensaje propio. Devuelve el mensaje y a quién notificar. */
+  async editMessage(meId: string, messageId: string, content: string) {
+    const msg = await this.prisma.message.findUnique({
+      where: { id: messageId },
+      select: { senderId: true, conversationId: true, deleted: true },
+    });
+    if (!msg || msg.deleted) throw new NotFoundException('Mensaje no encontrado');
+    if (msg.senderId !== meId) {
+      throw new ForbiddenException('No puedes editar este mensaje');
+    }
+    const updated = await this.prisma.message.update({
+      where: { id: messageId },
+      data: { content: content.trim(), editedAt: new Date() },
+      include: this.messageInclude,
+    });
+    const notify = await this.participantIds(msg.conversationId);
+    return { message: this.formatMessage(updated, true), notify };
+  }
+
+  /** Borra (marca como eliminado) un mensaje propio. */
+  async deleteMessage(meId: string, messageId: string) {
+    const msg = await this.prisma.message.findUnique({
+      where: { id: messageId },
+      select: { senderId: true, conversationId: true },
+    });
+    if (!msg) throw new NotFoundException('Mensaje no encontrado');
+    if (msg.senderId !== meId) {
+      throw new ForbiddenException('No puedes borrar este mensaje');
+    }
+    const updated = await this.prisma.message.update({
+      where: { id: messageId },
+      data: { deleted: true },
+      include: this.messageInclude,
+    });
+    const notify = await this.participantIds(msg.conversationId);
+    return { message: this.formatMessage(updated, true), notify };
   }
 
   /** Reacciona a un mensaje (un emoji por usuario). Devuelve a quién notificar. */

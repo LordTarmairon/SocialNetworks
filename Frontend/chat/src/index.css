@@ -719,6 +719,49 @@ body {
   white-space: nowrap;
 }
 
+.bubble.deleted {
+  opacity: 0.7;
+}
+.deleted-text {
+  font-style: italic;
+  color: var(--text-muted);
+}
+.bubble-edited {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.bubble-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 180px;
+}
+.bubble-edit input {
+  background: var(--bg);
+  border: 1px solid var(--surface-2);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  color: var(--text);
+  outline: none;
+}
+.bubble-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+.bubble-edit-actions button {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.bubble-edit-actions button[type='button'] {
+  color: var(--text-muted);
+}
+
 .bubble-reactions {
   display: flex;
   gap: 0.2rem;
