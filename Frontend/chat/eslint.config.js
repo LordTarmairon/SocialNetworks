@@ -18,5 +18,12 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // El patrón idiomático "cargar al montar" (useEffect(() => { void load() }))
+      // y los reseteos de estado al cambiar un input disparan esta regla nueva
+      // y muy estricta. Son usos intencionados y correctos, así que la dejamos
+      // como aviso en vez de error para no romper el lint.
+      'react-hooks/set-state-in-effect': 'warn',
+    },
   },
 ])

@@ -143,6 +143,20 @@ export function CallProvider({ children }: { children: ReactNode }) {
     [status, socket, getMedia, buildPeer, cleanup],
   );
 
+  /** Termina la llamada avisando al otro (colgar, rechazar o cancelar). */
+  const endCall = useCallback(
+    (reason: string) => {
+      if (convRef.current) {
+        socket?.emit('call:end', { conversationId: convRef.current, reason });
+      }
+      cleanup();
+    },
+    [socket, cleanup],
+  );
+
+  const reject = useCallback(() => endCall('reject'), [endCall]);
+  const hangup = useCallback(() => endCall('hangup'), [endCall]);
+
   const accept = useCallback(async () => {
     const offer = pendingOffer.current;
     const conversationId = convRef.current;
@@ -164,26 +178,6 @@ export function CallProvider({ children }: { children: ReactNode }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [socket, getMedia, buildPeer, video]);
-
-  const reject = useCallback(() => {
-    if (convRef.current) {
-      socket?.emit('call:end', {
-        conversationId: convRef.current,
-        reason: 'reject',
-      });
-    }
-    cleanup();
-  }, [socket, cleanup]);
-
-  const hangup = useCallback(() => {
-    if (convRef.current) {
-      socket?.emit('call:end', {
-        conversationId: convRef.current,
-        reason: 'hangup',
-      });
-    }
-    cleanup();
-  }, [socket, cleanup]);
 
   const toggleMute = useCallback(() => {
     const track = localRef.current?.getAudioTracks()[0];
