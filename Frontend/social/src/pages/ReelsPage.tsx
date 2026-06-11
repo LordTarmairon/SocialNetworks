@@ -11,6 +11,7 @@ import { Avatar } from '../components/Avatar';
 import { CommentItem } from '../components/CommentItem';
 import { MentionText } from '../components/MentionText';
 import { TopBar } from '../components/TopBar';
+import { ReelComposer } from '../components/ReelComposer';
 import { errorMessage } from '../lib/errors';
 import { mediaUrl, uploadVideo } from '../lib/media';
 import { socialApi, type Comment, type Post } from '../lib/social';
@@ -20,6 +21,7 @@ export function ReelsPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingVideo, setPendingVideo] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -34,21 +36,28 @@ export function ReelsPage() {
     void load();
   }, [load]);
 
-  async function onPickVideo(e: ChangeEvent<HTMLInputElement>) {
+  function onPickVideo(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (fileRef.current) fileRef.current.value = '';
+    if (file) setPendingVideo(file); // abre el compositor
+  }
+
+  async function onComposed(blob: Blob, caption: string) {
+    setPendingVideo(null);
     setUploading(true);
     setError(null);
     try {
+      const ext = blob.type.includes('webm') ? 'webm' : 'mp4';
+      const file = new File([blob], `reel.${ext}`, {
+        type: blob.type || 'video/webm',
+      });
       const url = await uploadVideo(file);
-      const caption = window.prompt('Pon un texto a tu reel (opcional):') ?? '';
-      const reel = await socialApi.createReel(url, caption.trim());
+      const reel = await socialApi.createReel(url, caption);
       setReels((prev) => [reel, ...prev]);
     } catch (err) {
       setError(errorMessage(err));
     } finally {
       setUploading(false);
-      if (fileRef.current) fileRef.current.value = '';
     }
   }
 
@@ -93,6 +102,13 @@ export function ReelsPage() {
           </div>
         )}
       </div>
+      {pendingVideo && (
+        <ReelComposer
+          file={pendingVideo}
+          onCancel={() => setPendingVideo(null)}
+          onDone={onComposed}
+        />
+      )}
     </>
   );
 }
