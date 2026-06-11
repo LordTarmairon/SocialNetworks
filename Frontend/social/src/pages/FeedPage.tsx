@@ -32,6 +32,9 @@ export function FeedPage() {
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [feedFilter, setFeedFilter] = useState<
+    'all' | 'photos' | 'reels' | 'text'
+  >('all');
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function loadFeed() {
@@ -86,6 +89,20 @@ export function FeedPage() {
   function onDeleted(id: string) {
     setPosts((prev) => prev.filter((p) => p.id !== id));
   }
+
+  const shownPosts = posts.filter((p) => {
+    if (feedFilter === 'photos') return !!p.imageUrl;
+    if (feedFilter === 'reels') return !!p.videoUrl;
+    if (feedFilter === 'text') return !p.imageUrl && !p.videoUrl;
+    return true;
+  });
+
+  const FILTERS: { id: typeof feedFilter; label: string }[] = [
+    { id: 'all', label: 'Todo' },
+    { id: 'photos', label: '📷 Fotos' },
+    { id: 'reels', label: '🎬 Reels' },
+    { id: 'text', label: '📝 Texto' },
+  ];
 
   return (
     <>
@@ -152,12 +169,26 @@ export function FeedPage() {
           </div>
         </form>
 
-        {posts.length === 0 ? (
+        <div className="feed-filters">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              className={`feed-filter ${feedFilter === f.id ? 'active' : ''}`}
+              onClick={() => setFeedFilter(f.id)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        {shownPosts.length === 0 ? (
           <p className="feed-empty">
-            Aún no hay publicaciones. ¡Sé el primero o agrega contactos!
+            {posts.length === 0
+              ? '¡Sé el primero o agrega contactos!'
+              : 'No hay publicaciones de este tipo.'}
           </p>
         ) : (
-          posts.map((p) => (
+          shownPosts.map((p) => (
             <PostCard
               key={p.id}
               post={p}

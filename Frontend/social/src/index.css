@@ -2350,3 +2350,28 @@ a {
 .filter-chip.active img {
   border-color: var(--blue);
 }
+
+/* ---- Filtros del feed --------------------------------------------------- */
+.feed-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.feed-filter {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 18px;
+  padding: 0.35rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.feed-filter:hover {
+  border-color: var(--blue);
+}
+.feed-filter.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
