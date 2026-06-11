@@ -11,6 +11,18 @@
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
+/* Modo oscuro: se activa con data-theme="dark" en <html>. */
+:root[data-theme='dark'] {
+  --blue: #2d8fe0;
+  --blue-dark: #6cb8f5;
+  --blue-light: #1e3a52;
+  --bg: #131b24;
+  --card: #1c2a38;
+  --text: #e7edf3;
+  --text-muted: #93a6b6;
+  --border: #2c3e50;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -1956,4 +1968,14 @@ a {
 .rcp-form button:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* ---- Botón de tema (claro/oscuro) --------------------------------------- */
+.topbar-theme {
+  background: none;
+  border: none;
+  font-size: 1.15rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.2rem;
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { friendsApi, type SearchResult } from '../lib/friends';
+import { getTheme, toggleTheme, type Theme } from '../lib/theme';
 import { Avatar } from './Avatar';
 import { NotificationsBell } from './NotificationsBell';
 
@@ -11,6 +12,7 @@ export function TopBar() {
   const [term, setTerm] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
+  const [theme, setTheme] = useState<Theme>(getTheme());
   const boxRef = useRef<HTMLDivElement>(null);
 
   // Búsqueda en vivo: desde 2 caracteres, con debounce y tope de resultados.
@@ -93,6 +95,14 @@ export function TopBar() {
         <Link to="/eventos">Eventos</Link>
         <Link to="/albumes">Fotos</Link>
         <Link to="/guardados">Guardados</Link>
+        <button
+          className="topbar-theme"
+          onClick={() => setTheme(toggleTheme())}
+          title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+          aria-label="Cambiar tema"
+        >
+          {theme === 'dark' ? '☀️' : '🌙'}
+        </button>
         <NotificationsBell />
         {user && (
           <Link to={`/u/${user.username}`} className="topbar-me">

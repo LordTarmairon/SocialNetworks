@@ -3,7 +3,11 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.tsx';
 import { AuthProvider } from './auth/AuthContext';
+import { applyTheme, getTheme } from './lib/theme';
 import './index.css';
+
+// Aplicar el tema guardado antes del primer render (evita parpadeo).
+applyTheme(getTheme());
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
