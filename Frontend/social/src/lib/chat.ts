@@ -24,6 +24,18 @@ export interface MessageSender {
   avatarUrl: string | null;
 }
 
+export interface MessageReaction {
+  userId: string;
+  emoji: string;
+}
+
+export interface ReplyRef {
+  id: string;
+  senderId: string;
+  content: string;
+  attachmentUrl: string | null;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -35,6 +47,8 @@ export interface Message {
   deleted: boolean;
   createdAt: string;
   readAt: string | null;
+  replyTo: ReplyRef | null;
+  reactions: MessageReaction[];
 }
 
 /** Nombre a mostrar de una conversación. */

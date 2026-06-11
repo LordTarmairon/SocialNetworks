@@ -15,6 +15,8 @@ import { mediaUrl, uploadImage } from '../lib/media';
 import { connectSocket } from '../lib/socket';
 import { MESSAGES_READ_EVENT } from '../lib/useUnreadMessages';
 
+const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
 export function MessagesPage() {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -23,6 +25,8 @@ export function MessagesPage() {
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -126,11 +130,24 @@ export function MessagesPage() {
       );
     };
 
+    const onReaction = (e: {
+      messageId: string;
+      reactions: Message['reactions'];
+    }) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === e.messageId ? { ...m, reactions: e.reactions } : m,
+        ),
+      );
+    };
+
     socket.on('message:new', onNew);
     socket.on('presence', onPresence);
+    socket.on('message:reaction', onReaction);
     return () => {
       socket.off('message:new', onNew);
       socket.off('presence', onPresence);
+      socket.off('message:reaction', onReaction);
     };
   }, [activeId, load]);
 
@@ -144,8 +161,27 @@ export function MessagesPage() {
     if (!content || !activeId) return;
     const token = getToken();
     if (!token) return;
-    connectSocket(token).emit('message:send', { conversationId: activeId, content });
+    connectSocket(token).emit('message:send', {
+      conversationId: activeId,
+      content,
+      replyToId: replyTo?.id,
+    });
     setText('');
+    setReplyTo(null);
+  }
+
+  function react(messageId: string, emoji: string) {
+    const token = getToken();
+    if (!token) return;
+    const me = messages.find((m) => m.id === messageId);
+    const mine = me?.reactions.find((r) => r.userId === user?.id);
+    const socket = connectSocket(token);
+    if (mine && mine.emoji === emoji) {
+      socket.emit('message:unreact', { messageId });
+    } else {
+      socket.emit('message:react', { messageId, emoji });
+    }
+    setPickerFor(null);
   }
 
   async function onFilteredAttach(blob: Blob) {
@@ -234,31 +270,90 @@ export function MessagesPage() {
                 </div>
               </header>
               <div className="msg-thread-body">
-                {messages.map((m) => (
-                  <div
-                    key={m.id}
-                    className={`msg-bubble ${m.senderId === user?.id ? 'mine' : 'theirs'} ${
-                      m.attachmentUrl && !m.deleted ? 'has-img' : ''
-                    }`}
-                  >
-                    {m.deleted ? (
-                      <em className="msg-deleted">Mensaje eliminado</em>
-                    ) : (
-                      <>
-                        {m.attachmentUrl && m.attachmentType === 'image' && (
-                          <img
-                            className="msg-attach"
-                            src={mediaUrl(m.attachmentUrl)}
-                            alt=""
-                          />
+                {messages.map((m) => {
+                  const mine = m.senderId === user?.id;
+                  const counts: Record<string, number> = {};
+                  for (const r of m.reactions)
+                    counts[r.emoji] = (counts[r.emoji] ?? 0) + 1;
+                  return (
+                    <div key={m.id} className={`msg-line ${mine ? 'mine' : 'theirs'}`}>
+                      <div
+                        className={`msg-bubble ${mine ? 'mine' : 'theirs'} ${
+                          m.attachmentUrl && !m.deleted ? 'has-img' : ''
+                        }`}
+                      >
+                        {m.replyTo && !m.deleted && (
+                          <div className="msg-quote">
+                            {m.replyTo.attachmentUrl
+                              ? '📷 Foto'
+                              : m.replyTo.content || 'Mensaje'}
+                          </div>
                         )}
-                        {m.content}
-                      </>
-                    )}
-                  </div>
-                ))}
+                        {m.deleted ? (
+                          <em className="msg-deleted">Mensaje eliminado</em>
+                        ) : (
+                          <>
+                            {m.attachmentUrl && m.attachmentType === 'image' && (
+                              <img
+                                className="msg-attach"
+                                src={mediaUrl(m.attachmentUrl)}
+                                alt=""
+                              />
+                            )}
+                            {m.content}
+                          </>
+                        )}
+                        {Object.keys(counts).length > 0 && (
+                          <div className="msg-reacts">
+                            {Object.entries(counts).map(([emoji, n]) => (
+                              <span key={emoji} className="msg-react-chip">
+                                {emoji}
+                                {n > 1 && <i>{n}</i>}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {!m.deleted && (
+                        <div className="msg-actions">
+                          <button
+                            title="Reaccionar"
+                            onClick={() =>
+                              setPickerFor(pickerFor === m.id ? null : m.id)
+                            }
+                          >
+                            😊
+                          </button>
+                          <button title="Responder" onClick={() => setReplyTo(m)}>
+                            ↩
+                          </button>
+                          {pickerFor === m.id && (
+                            <div className="msg-picker">
+                              {EMOJIS.map((e) => (
+                                <button key={e} onClick={() => react(m.id, e)}>
+                                  {e}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
                 <div ref={endRef} />
               </div>
+              {replyTo && (
+                <div className="msg-reply-bar">
+                  <span className="msg-reply-text">
+                    Respondiendo:{' '}
+                    {replyTo.attachmentUrl ? '📷 Foto' : replyTo.content}
+                  </span>
+                  <button onClick={() => setReplyTo(null)} aria-label="Cancelar">
+                    ✕
+                  </button>
+                </div>
+              )}
               <form className="msg-input" onSubmit={send}>
                 <button
                   type="button"
