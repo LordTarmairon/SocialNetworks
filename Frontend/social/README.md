@@ -17,7 +17,9 @@ Red social estilo Tuenti/Facebook. Forma parte del monorepo
 - Comentarios y reacciones; menciones `@usuario` y `#hashtags`.
 - **Amigos**, seguir usuarios, bloquear, **eventos** y guardados.
 - **Etiquetado** de personas en fotos, novedades y «gente que quizás conozcas».
-- Buscador en vivo, «quién vio tu perfil» y **Reels** (vídeos cortos verticales).
+- Buscador en vivo, «quién vio tu perfil» y **Reels** (vídeos cortos verticales
+  con comentarios).
+- **Campana de notificaciones** en tiempo real (contador en vivo vía WebSocket).
 
 ## Desarrollo
 

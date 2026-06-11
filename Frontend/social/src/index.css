@@ -1808,3 +1808,152 @@ a {
 .reel-like.on {
   transform: scale(1.05);
 }
+
+/* ---- Campana de notificaciones ------------------------------------------ */
+.notif-bell {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.notif-bell-btn {
+  position: relative;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0.2rem;
+}
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #e0245e;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+.notif-dd-head {
+  padding: 0.7rem 1rem;
+  font-weight: 700;
+  color: var(--blue-dark);
+  border-bottom: 1px solid var(--border);
+}
+.notif-empty {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+.notif-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.notif-row a {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  text-decoration: none;
+  color: var(--text);
+}
+.notif-row a:hover {
+  background: var(--bg);
+}
+.notif-row.unread a {
+  background: var(--blue-light);
+}
+.notif-text {
+  font-size: 0.88rem;
+  line-height: 1.3;
+}
+
+/* ---- Panel de comentarios de un reel ------------------------------------ */
+.reel-comments-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 60%;
+  background: var(--card);
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 5;
+}
+.rcp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+.rcp-head button {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.rcp-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem 1rem;
+}
+.rcp-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 1rem 0;
+}
+.rcp-form {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  border-top: 1px solid var(--border);
+}
+.rcp-form input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 0.5rem 0.9rem;
+  font: inherit;
+  outline: none;
+}
+.rcp-form input:focus {
+  border-color: var(--blue);
+}
+.rcp-form button {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 18px;
+  padding: 0 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rcp-form button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

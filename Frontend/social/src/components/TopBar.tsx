@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { friendsApi, type SearchResult } from '../lib/friends';
 import { Avatar } from './Avatar';
+import { NotificationsBell } from './NotificationsBell';
 
 export function TopBar() {
   const { user, logout } = useAuth();
@@ -92,6 +93,7 @@ export function TopBar() {
         <Link to="/eventos">Eventos</Link>
         <Link to="/albumes">Fotos</Link>
         <Link to="/guardados">Guardados</Link>
+        <NotificationsBell />
         {user && (
           <Link to={`/u/${user.username}`} className="topbar-me">
             <Avatar name={user.displayName} src={user.avatarUrl} size={30} />

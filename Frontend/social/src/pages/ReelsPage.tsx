@@ -4,14 +4,16 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type FormEvent,
 } from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar } from '../components/Avatar';
+import { CommentItem } from '../components/CommentItem';
 import { MentionText } from '../components/MentionText';
 import { TopBar } from '../components/TopBar';
 import { errorMessage } from '../lib/errors';
 import { mediaUrl, uploadVideo } from '../lib/media';
-import { socialApi, type Post } from '../lib/social';
+import { socialApi, type Comment, type Post } from '../lib/social';
 
 export function ReelsPage() {
   const [reels, setReels] = useState<Post[]>([]);
@@ -105,7 +107,37 @@ function ReelItem({
   const videoRef = useRef<HTMLVideoElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [paused, setPaused] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentText, setCommentText] = useState('');
+  const [commentCount, setCommentCount] = useState(reel.commentCount);
   const liked = reel.myReaction === 'love' || reel.myReaction === 'like';
+
+  async function openComments() {
+    const next = !showComments;
+    setShowComments(next);
+    if (next && comments.length === 0) {
+      try {
+        setComments(await socialApi.comments(reel.id));
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  async function submitComment(e: FormEvent) {
+    e.preventDefault();
+    const content = commentText.trim();
+    if (!content) return;
+    try {
+      const c = await socialApi.addComment(reel.id, content);
+      setComments((prev) => [...prev, c]);
+      setCommentText('');
+      setCommentCount((n) => n + 1);
+    } catch {
+      /* ignore */
+    }
+  }
 
   // Reproduce el reel cuando entra en pantalla; pausa cuando sale.
   useEffect(() => {
@@ -200,11 +232,45 @@ function ReelItem({
           {liked ? '❤️' : '🤍'}
           <span>{reel.reactionCount}</span>
         </button>
-        <div className="reel-comments" title="Comentarios">
+        <button
+          className="reel-comments"
+          title="Comentarios"
+          onClick={openComments}
+        >
           💬
-          <span>{reel.commentCount}</span>
-        </div>
+          <span>{commentCount}</span>
+        </button>
       </div>
+
+      {showComments && (
+        <div className="reel-comments-panel">
+          <div className="rcp-head">
+            <strong>Comentarios</strong>
+            <button onClick={() => setShowComments(false)} aria-label="Cerrar">
+              ✕
+            </button>
+          </div>
+          <div className="rcp-list">
+            {comments.length === 0 ? (
+              <p className="rcp-empty">Sé el primero en comentar</p>
+            ) : (
+              comments.map((c) => (
+                <CommentItem key={c.id} comment={c} postId={reel.id} />
+              ))
+            )}
+          </div>
+          <form className="rcp-form" onSubmit={submitComment}>
+            <input
+              placeholder="Añade un comentario…"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+            />
+            <button type="submit" disabled={!commentText.trim()}>
+              Enviar
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
