@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { ImageFilterModal } from '../components/ImageFilterModal';
 import { PhotoViewer } from '../components/PhotoViewer';
 import { TopBar } from '../components/TopBar';
 import { errorMessage } from '../lib/errors';
@@ -14,6 +15,7 @@ export function AlbumPage() {
   const [selected, setSelected] = useState<Photo | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function load() {
@@ -31,12 +33,20 @@ export function AlbumPage() {
 
   const isOwner = album?.owner.id === user?.id;
 
-  async function onUpload(e: ChangeEvent<HTMLInputElement>) {
+  function onUpload(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (fileRef.current) fileRef.current.value = '';
+    if (file) setPendingFile(file); // abre el editor de filtros
+  }
+
+  async function onFilteredPhoto(blob: Blob) {
+    setPendingFile(null);
     setUploading(true);
     setError(null);
     try {
+      const file = new File([blob], 'foto.jpg', {
+        type: blob.type || 'image/jpeg',
+      });
       const url = await uploadImage(file);
       const photo = await photosApi.addPhoto(id, url);
       setAlbum((prev) =>
@@ -47,7 +57,6 @@ export function AlbumPage() {
       setError(errorMessage(err));
     } finally {
       setUploading(false);
-      if (fileRef.current) fileRef.current.value = '';
     }
   }
 
@@ -127,6 +136,13 @@ export function AlbumPage() {
           photo={selected}
           onClose={() => setSelected(null)}
           onChanged={onPhotoChanged}
+        />
+      )}
+      {pendingFile && (
+        <ImageFilterModal
+          file={pendingFile}
+          onCancel={() => setPendingFile(null)}
+          onDone={onFilteredPhoto}
         />
       )}
     </>

@@ -7,10 +7,13 @@ import {
 } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
+import { ImageFilterModal } from '../components/ImageFilterModal';
 import { TopBar } from '../components/TopBar';
 import { getToken } from '../lib/api';
 import { chatApi, convName, type Conversation, type Message } from '../lib/chat';
+import { mediaUrl, uploadImage } from '../lib/media';
 import { connectSocket } from '../lib/socket';
+import { MESSAGES_READ_EVENT } from '../lib/useUnreadMessages';
 
 export function MessagesPage() {
   const { user } = useAuth();
@@ -19,7 +22,9 @@ export function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   // Refresca solo la lista de conversaciones (lo usa el tiempo real).
   const load = useCallback(async () => {
@@ -65,7 +70,14 @@ export function MessagesPage() {
       if (active) setMessages(m);
     });
     const token = getToken();
-    if (token) connectSocket(token).emit('message:read', { conversationId: activeId });
+    if (token) {
+      connectSocket(token).emit('message:read', { conversationId: activeId });
+      // Damos un margen a que el backend actualice readAt y refrescamos el badge.
+      setTimeout(
+        () => window.dispatchEvent(new Event(MESSAGES_READ_EVENT)),
+        400,
+      );
+    }
     return () => {
       active = false;
     };
@@ -136,6 +148,28 @@ export function MessagesPage() {
     setText('');
   }
 
+  async function onFilteredAttach(blob: Blob) {
+    setPendingFile(null);
+    if (!activeId) return;
+    try {
+      const file = new File([blob], 'foto.jpg', {
+        type: blob.type || 'image/jpeg',
+      });
+      const url = await uploadImage(file);
+      const token = getToken();
+      if (token) {
+        connectSocket(token).emit('message:send', {
+          conversationId: activeId,
+          content: '',
+          attachmentUrl: url,
+          attachmentType: 'image',
+        });
+      }
+    } catch {
+      setError('No se pudo enviar la foto.');
+    }
+  }
+
   const active = conversations.find((c) => c.id === activeId) ?? null;
 
   return (
@@ -203,18 +237,48 @@ export function MessagesPage() {
                 {messages.map((m) => (
                   <div
                     key={m.id}
-                    className={`msg-bubble ${m.senderId === user?.id ? 'mine' : 'theirs'}`}
+                    className={`msg-bubble ${m.senderId === user?.id ? 'mine' : 'theirs'} ${
+                      m.attachmentUrl && !m.deleted ? 'has-img' : ''
+                    }`}
                   >
                     {m.deleted ? (
                       <em className="msg-deleted">Mensaje eliminado</em>
                     ) : (
-                      m.content
+                      <>
+                        {m.attachmentUrl && m.attachmentType === 'image' && (
+                          <img
+                            className="msg-attach"
+                            src={mediaUrl(m.attachmentUrl)}
+                            alt=""
+                          />
+                        )}
+                        {m.content}
+                      </>
                     )}
                   </div>
                 ))}
                 <div ref={endRef} />
               </div>
               <form className="msg-input" onSubmit={send}>
+                <button
+                  type="button"
+                  className="msg-attach-btn"
+                  onClick={() => fileRef.current?.click()}
+                  title="Enviar foto"
+                >
+                  📷
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (fileRef.current) fileRef.current.value = '';
+                    if (f) setPendingFile(f);
+                  }}
+                />
                 <input
                   placeholder="Escribe un mensaje…"
                   value={text}
@@ -232,6 +296,13 @@ export function MessagesPage() {
           )}
         </section>
       </div>
+      {pendingFile && (
+        <ImageFilterModal
+          file={pendingFile}
+          onCancel={() => setPendingFile(null)}
+          onDone={onFilteredAttach}
+        />
+      )}
     </>
   );
 }

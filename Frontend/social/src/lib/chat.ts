@@ -45,6 +45,7 @@ export function convName(c: Conversation): string {
 
 export const chatApi = {
   listConversations: () => api.get<Conversation[]>('/conversations'),
+  unreadCount: () => api.get<{ count: number }>('/conversations/unread-count'),
   startConversation: (userId: string) =>
     api.post<Conversation>('/conversations', { userId }),
   listMessages: (conversationId: string) =>

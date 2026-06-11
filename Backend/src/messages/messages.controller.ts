@@ -25,6 +25,11 @@ export class MessagesController {
     return this.messages.listConversations(me.id);
   }
 
+  @Get('unread-count')
+  unreadCount(@CurrentUser() me: AuthUser) {
+    return this.messages.unreadMessageCount(me.id);
+  }
+
   @Post()
   start(@CurrentUser() me: AuthUser, @Body() dto: StartConversationDto) {
     return this.messages.getOrCreateConversation(me.id, dto.userId);

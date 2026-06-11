@@ -360,6 +360,25 @@ export class MessagesService {
     return { conversationId, readAt: now, notify: others };
   }
 
+  /** Nº de mensajes sin leer (de otros) en todas mis conversaciones. */
+  async unreadMessageCount(meId: string): Promise<{ count: number }> {
+    const parts = await this.prisma.conversationParticipant.findMany({
+      where: { userId: meId },
+      select: { conversationId: true },
+    });
+    const ids = parts.map((p) => p.conversationId);
+    if (ids.length === 0) return { count: 0 };
+    const count = await this.prisma.message.count({
+      where: {
+        conversationId: { in: ids },
+        senderId: { not: meId },
+        readAt: null,
+        deleted: false,
+      },
+    });
+    return { count };
+  }
+
   async participantIds(conversationId: string): Promise<string[]> {
     const parts = await this.prisma.conversationParticipant.findMany({
       where: { conversationId },

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { friendsApi, type SearchResult } from '../lib/friends';
 import { getTheme, toggleTheme, type Theme } from '../lib/theme';
+import { useUnreadMessages } from '../lib/useUnreadMessages';
 import { Avatar } from './Avatar';
 import { BottomNav } from './BottomNav';
 import { NotificationsBell } from './NotificationsBell';
@@ -14,6 +15,7 @@ export function TopBar() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
   const [theme, setTheme] = useState<Theme>(getTheme());
+  const unread = useUnreadMessages();
   const boxRef = useRef<HTMLDivElement>(null);
 
   // Búsqueda en vivo: desde 2 caracteres, con debounce y tope de resultados.
@@ -94,7 +96,12 @@ export function TopBar() {
         <span className="topbar-links">
           <Link to="/">Inicio</Link>
           <Link to="/reels">Reels</Link>
-          <Link to="/mensajes">Mensajes</Link>
+          <Link to="/mensajes" className="topbar-msglink">
+            Mensajes
+            {unread > 0 && (
+              <span className="topbar-msgbadge">{unread > 9 ? '9+' : unread}</span>
+            )}
+          </Link>
           <Link to="/contactos">Contactos</Link>
           <Link to="/eventos">Eventos</Link>
           <Link to="/albumes">Fotos</Link>

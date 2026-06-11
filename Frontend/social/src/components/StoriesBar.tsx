@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { mediaUrl, uploadImage } from '../lib/media';
 import { socialApi, type StoryGroup, type StoryViewer } from '../lib/social';
 import { Avatar } from './Avatar';
+import { ImageFilterModal } from './ImageFilterModal';
 
 interface Props {
   groups: StoryGroup[];
@@ -14,6 +15,7 @@ const STORY_EMOJIS = ['❤️', '😂', '😮', '😢', '👍', '🔥'];
 export function StoriesBar({ groups, onChanged }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [viewer, setViewer] = useState<StoryGroup | null>(null);
   const [index, setIndex] = useState(0);
   const [reacted, setReacted] = useState<Record<string, string | null>>({});
@@ -45,17 +47,24 @@ export function StoriesBar({ groups, onChanged }: Props) {
     return () => clearTimeout(t);
   }, [viewer, index, viewersFor]);
 
-  async function onPick(e: ChangeEvent<HTMLInputElement>) {
+  function onPick(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (fileRef.current) fileRef.current.value = '';
+    if (file) setPendingFile(file); // abre el editor de filtros
+  }
+
+  async function onFilteredStory(blob: Blob) {
+    setPendingFile(null);
     setUploading(true);
     try {
+      const file = new File([blob], 'historia.jpg', {
+        type: blob.type || 'image/jpeg',
+      });
       const url = await uploadImage(file);
       await socialApi.createStory(url);
       onChanged();
     } finally {
       setUploading(false);
-      if (fileRef.current) fileRef.current.value = '';
     }
   }
 
@@ -120,6 +129,14 @@ export function StoriesBar({ groups, onChanged }: Props) {
     : null;
 
   return (
+    <>
+    {pendingFile && (
+      <ImageFilterModal
+        file={pendingFile}
+        onCancel={() => setPendingFile(null)}
+        onDone={onFilteredStory}
+      />
+    )}
     <div className="stories">
       <button
         className="story-add"
@@ -263,5 +280,6 @@ export function StoriesBar({ groups, onChanged }: Props) {
         </div>
       )}
     </div>
+    </>
   );
 }
