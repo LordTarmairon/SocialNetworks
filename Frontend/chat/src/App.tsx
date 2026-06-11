@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
+import { CallProvider } from './chat/CallContext';
+import { CallOverlay } from './chat/CallOverlay';
 import { SocketProvider } from './chat/SocketContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ChatPage } from './pages/ChatPage';
@@ -19,7 +21,9 @@ function PublicOnly({ children }: { children: ReactNode }) {
 function App() {
   return (
     <SocketProvider>
-      <Routes>
+      <CallProvider>
+        <CallOverlay />
+        <Routes>
         <Route
           path="/login"
           element={
@@ -68,8 +72,9 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </CallProvider>
     </SocketProvider>
   );
 }

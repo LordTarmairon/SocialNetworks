@@ -17,6 +17,7 @@ import {
 import { errorMessage } from '../lib/errors';
 import { mediaUrl, uploadAudio, uploadImage } from '../lib/media';
 import { presenceText } from '../lib/presence';
+import { useCall } from './CallContext';
 import { ForwardModal } from './ForwardModal';
 import { useSocket } from './SocketContext';
 
@@ -30,6 +31,7 @@ interface Props {
 
 export function ConversationView({ conversation, meId, onOpenInfo }: Props) {
   const socket = useSocket();
+  const call = useCall();
   const [messages, setMessages] = useState<Message[]>([]);
   const [text, setText] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -304,13 +306,37 @@ export function ConversationView({ conversation, meId, onOpenInfo }: Props) {
         onClick={conversation.isGroup ? onOpenInfo : undefined}
       >
         <Avatar name={av.name} src={av.src} size={40} />
-        <div>
+        <div className="thread-head-info">
           <div className="thread-name">{convName(conversation)}</div>
           <div className={`thread-status ${otherTyping ? 'typing' : ''}`}>
             {headerStatus}
             {conversation.isGroup && ' · ⓘ ver info'}
           </div>
         </div>
+        {!conversation.isGroup && conversation.otherUser && (
+          <div className="thread-call-actions">
+            <button
+              className="thread-call-btn"
+              title="Llamada de voz"
+              onClick={(e) => {
+                e.stopPropagation();
+                call.startCall(conversation.id, conversation.otherUser!, false);
+              }}
+            >
+              📞
+            </button>
+            <button
+              className="thread-call-btn"
+              title="Videollamada"
+              onClick={(e) => {
+                e.stopPropagation();
+                call.startCall(conversation.id, conversation.otherUser!, true);
+              }}
+            >
+              📹
+            </button>
+          </div>
+        )}
       </header>
 
       <div className="thread-messages">

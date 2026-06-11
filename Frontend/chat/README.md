@@ -16,6 +16,8 @@ Cliente de mensajería estilo WhatsApp/Messenger. Forma parte del monorepo
 - **Alta y acceso por número de teléfono** (o por usuario).
 - Chats 1‑a‑1 y **grupos** (crear, renombrar, añadir miembros, salir).
 - **Editar y borrar** mensajes, **reenviar**, **reacciones** y notas de voz.
+- **Llamadas de voz y vídeo** 1‑a‑1 (WebRTC; el servidor solo hace de
+  señalización por WebSocket, el audio/vídeo viaja peer‑to‑peer).
 - Recibos de lectura y «última conexión» configurables en Ajustes.
 
 ## Desarrollo

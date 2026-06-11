@@ -256,6 +256,86 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  // ---- Llamadas (WebRTC) -------------------------------------------------
+  // El servidor solo hace de señalización: reenvía las ofertas/respuestas/ICE
+  // entre los participantes de la conversación (1-a-1). El audio y el vídeo
+  // viajan peer-to-peer, no pasan por aquí.
+
+  /** Reenvía un evento de llamada al resto de participantes de la conversación. */
+  private async relayCall(
+    userId: string,
+    conversationId: string,
+    event: string,
+    data: Record<string, unknown>,
+  ) {
+    const participants = await this.messages.participantIds(conversationId);
+    if (!participants.includes(userId)) return;
+    for (const pid of participants) {
+      if (pid !== userId) {
+        this.server.to(`user:${pid}`).emit(event, { ...data, conversationId });
+      }
+    }
+  }
+
+  /** Inicio de llamada: oferta SDP que llega al otro como "llamada entrante". */
+  @SubscribeMessage('call:offer')
+  async onCallOffer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody()
+    body: { conversationId: string; sdp: unknown; video?: boolean },
+  ) {
+    const userId = client.data.userId as string | undefined;
+    if (!userId || !body?.conversationId || !body?.sdp) return;
+    const from = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, displayName: true, avatarUrl: true },
+    });
+    await this.relayCall(userId, body.conversationId, 'call:incoming', {
+      sdp: body.sdp,
+      video: !!body.video,
+      from,
+    });
+  }
+
+  /** El destinatario acepta y devuelve su respuesta SDP. */
+  @SubscribeMessage('call:answer')
+  async onCallAnswer(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { conversationId: string; sdp: unknown },
+  ) {
+    const userId = client.data.userId as string | undefined;
+    if (!userId || !body?.conversationId || !body?.sdp) return;
+    await this.relayCall(userId, body.conversationId, 'call:answered', {
+      sdp: body.sdp,
+    });
+  }
+
+  /** Intercambio de candidatos ICE durante la negociación. */
+  @SubscribeMessage('call:ice')
+  async onCallIce(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { conversationId: string; candidate: unknown },
+  ) {
+    const userId = client.data.userId as string | undefined;
+    if (!userId || !body?.conversationId || !body?.candidate) return;
+    await this.relayCall(userId, body.conversationId, 'call:ice', {
+      candidate: body.candidate,
+    });
+  }
+
+  /** Fin de llamada (colgar, rechazar o cancelar): se avisa al otro. */
+  @SubscribeMessage('call:end')
+  async onCallEnd(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() body: { conversationId: string; reason?: string },
+  ) {
+    const userId = client.data.userId as string | undefined;
+    if (!userId || !body?.conversationId) return;
+    await this.relayCall(userId, body.conversationId, 'call:end', {
+      reason: body.reason ?? 'hangup',
+    });
+  }
+
   /** Indicador "escribiendo…": se reenvía al otro participante. */
   @SubscribeMessage('typing')
   async onTyping(
