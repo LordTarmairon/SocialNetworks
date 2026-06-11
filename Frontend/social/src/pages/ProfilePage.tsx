@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
 import { EditProfile } from '../components/EditProfile';
@@ -21,6 +21,7 @@ const relationLabel: Record<Profile['relation'], string> = {
 export function ProfilePage() {
   const { username = '' } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [wallLocked, setWallLocked] = useState(false);
@@ -105,6 +106,14 @@ export function ProfilePage() {
                   <span className="profile-relation">
                     {relationLabel[profile.relation]}
                   </span>
+                  {!profile.iBlocked && profile.relation === 'friends' && (
+                    <button
+                      className="btn-green profile-block-btn"
+                      onClick={() => navigate(`/mensajes?to=${profile.id}`)}
+                    >
+                      💬 Mensaje
+                    </button>
+                  )}
                   {!profile.iBlocked && (
                     <button
                       className={`${

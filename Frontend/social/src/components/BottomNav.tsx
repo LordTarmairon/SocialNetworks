@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 const ITEMS = [
   { to: '/', icon: '🏠', label: 'Inicio', end: true },
   { to: '/reels', icon: '🎬', label: 'Reels' },
-  { to: '/contactos', icon: '👥', label: 'Contactos' },
+  { to: '/mensajes', icon: '💬', label: 'Mensajes' },
   { to: '/albumes', icon: '📷', label: 'Fotos' },
 ];
 

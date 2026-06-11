@@ -7,6 +7,7 @@ import { ContactsPage } from './pages/ContactsPage';
 import { EventsPage } from './pages/EventsPage';
 import { FeedPage } from './pages/FeedPage';
 import { LoginPage } from './pages/LoginPage';
+import { MessagesPage } from './pages/MessagesPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ReelsPage } from './pages/ReelsPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -74,6 +75,14 @@ function App() {
         element={
           <Protected>
             <ReelsPage />
+          </Protected>
+        }
+      />
+      <Route
+        path="/mensajes"
+        element={
+          <Protected>
+            <MessagesPage />
           </Protected>
         }
       />

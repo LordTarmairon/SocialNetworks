@@ -94,6 +94,7 @@ export function TopBar() {
         <span className="topbar-links">
           <Link to="/">Inicio</Link>
           <Link to="/reels">Reels</Link>
+          <Link to="/mensajes">Mensajes</Link>
           <Link to="/contactos">Contactos</Link>
           <Link to="/eventos">Eventos</Link>
           <Link to="/albumes">Fotos</Link>

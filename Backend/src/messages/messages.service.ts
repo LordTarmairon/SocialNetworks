@@ -83,7 +83,10 @@ export class MessagesService {
       },
       include: { _count: { select: { participants: true } } },
     });
-    const existing = candidates.find((c) => c._count.participants === 2);
+    // Solo un 1-a-1 (no un grupo que casualmente tenga 2 miembros).
+    const existing = candidates.find(
+      (c) => !c.isGroup && c._count.participants === 2,
+    );
 
     const conversation =
       existing ??
