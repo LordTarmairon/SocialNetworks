@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { Avatar } from '../components/Avatar';
+import { ImageFilterModal } from '../components/ImageFilterModal';
 import { NewsWidget } from '../components/NewsWidget';
 import { PostCard } from '../components/PostCard';
 import { SideDiscovery } from '../components/SideDiscovery';
@@ -30,6 +31,7 @@ export function FeedPage() {
   const [visibility, setVisibility] = useState<Visibility>('friends');
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function loadFeed() {
@@ -44,15 +46,19 @@ export function FeedPage() {
     void loadStories();
   }, []);
 
-  async function onPickImage(e: ChangeEvent<HTMLInputElement>) {
+  function onPickImage(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (fileRef.current) fileRef.current.value = '';
+    if (file) setPendingFile(file); // abre el editor de filtros
+  }
+
+  async function onFiltered(blob: Blob) {
+    setPendingFile(null);
     try {
+      const file = new File([blob], 'foto.jpg', { type: blob.type || 'image/jpeg' });
       setImage(await uploadImage(file));
     } catch (err) {
       setError(errorMessage(err));
-    } finally {
-      if (fileRef.current) fileRef.current.value = '';
     }
   }
 
@@ -163,6 +169,13 @@ export function FeedPage() {
         )}
         </main>
       </div>
+      {pendingFile && (
+        <ImageFilterModal
+          file={pendingFile}
+          onCancel={() => setPendingFile(null)}
+          onDone={onFiltered}
+        />
+      )}
     </>
   );
 }
