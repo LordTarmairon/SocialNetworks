@@ -344,10 +344,18 @@ export class MessagesService {
    */
   async markRead(meId: string, conversationId: string) {
     await this.assertParticipant(meId, conversationId);
+
+    // Mi marca de lectura siempre se actualiza (alimenta el contador de no
+    // leídos), independientemente de si comparto los "vistos" con el otro.
+    const now = new Date();
+    await this.prisma.conversationParticipant.update({
+      where: { conversationId_userId: { conversationId, userId: meId } },
+      data: { lastReadAt: now },
+    });
+
     const me = await this.getFlags(meId);
     if (!me.showReadReceipts) return null;
 
-    const now = new Date();
     const result = await this.prisma.message.updateMany({
       where: { conversationId, senderId: { not: meId }, readAt: null },
       data: { readAt: now },
@@ -364,16 +372,18 @@ export class MessagesService {
   async unreadMessageCount(meId: string): Promise<{ count: number }> {
     const parts = await this.prisma.conversationParticipant.findMany({
       where: { userId: meId },
-      select: { conversationId: true },
+      select: { conversationId: true, lastReadAt: true },
     });
-    const ids = parts.map((p) => p.conversationId);
-    if (ids.length === 0) return { count: 0 };
+    if (parts.length === 0) return { count: 0 };
+    // Por conversación: mensajes de otros posteriores a mi última lectura.
     const count = await this.prisma.message.count({
       where: {
-        conversationId: { in: ids },
         senderId: { not: meId },
-        readAt: null,
         deleted: false,
+        OR: parts.map((p) => ({
+          conversationId: p.conversationId,
+          ...(p.lastReadAt ? { createdAt: { gt: p.lastReadAt } } : {}),
+        })),
       },
     });
     return { count };
