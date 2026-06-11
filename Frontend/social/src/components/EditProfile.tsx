@@ -1,7 +1,7 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { useAuth } from '../auth/AuthContext';
 import { errorMessage } from '../lib/errors';
-import { uploadImage } from '../lib/media';
+import { mediaUrl, uploadImage } from '../lib/media';
 import { usersApi } from '../lib/users';
 import type { Profile } from '../lib/social';
 import { Avatar } from './Avatar';
@@ -17,9 +17,11 @@ export function EditProfile({ profile, onSaved, onClose }: Props) {
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [bio, setBio] = useState(profile.bio ?? '');
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
+  const [coverUrl, setCoverUrl] = useState(profile.coverUrl);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
 
   async function onPickAvatar(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -35,6 +37,19 @@ export function EditProfile({ profile, onSaved, onClose }: Props) {
     }
   }
 
+  async function onPickCover(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    try {
+      setCoverUrl(await uploadImage(file));
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      if (coverRef.current) coverRef.current.value = '';
+    }
+  }
+
   async function save() {
     setSaving(true);
     setError(null);
@@ -43,6 +58,7 @@ export function EditProfile({ profile, onSaved, onClose }: Props) {
         displayName: displayName.trim(),
         bio: bio.trim(),
         avatarUrl: avatarUrl ?? undefined,
+        coverUrl: coverUrl ?? undefined,
       });
       // Reflejar en la sesión y en la cabecera del perfil.
       if (user) setUser({ ...user, ...updated });
@@ -50,6 +66,7 @@ export function EditProfile({ profile, onSaved, onClose }: Props) {
         displayName: updated.displayName,
         bio: updated.bio,
         avatarUrl: updated.avatarUrl,
+        coverUrl: updated.coverUrl,
       });
       onClose();
     } catch (err) {
@@ -64,6 +81,27 @@ export function EditProfile({ profile, onSaved, onClose }: Props) {
       <div className="edit-card" onClick={(e) => e.stopPropagation()}>
         <h2 className="section-title">Editar perfil</h2>
         {error && <div className="auth-error">{error}</div>}
+
+        <button
+          type="button"
+          className="edit-cover"
+          onClick={() => coverRef.current?.click()}
+          style={
+            coverUrl
+              ? { backgroundImage: `url(${mediaUrl(coverUrl)})` }
+              : undefined
+          }
+          title="Cambiar portada"
+        >
+          <span className="edit-cover-badge">📷 Portada</span>
+        </button>
+        <input
+          ref={coverRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={onPickCover}
+        />
 
         <div className="edit-avatar">
           <button

@@ -59,6 +59,7 @@ export interface Profile {
   username: string;
   displayName: string;
   avatarUrl: string | null;
+  coverUrl: string | null;
   bio: string | null;
   createdAt: string;
   postCount: number;

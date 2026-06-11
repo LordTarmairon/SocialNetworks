@@ -926,10 +926,38 @@ a {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.profile-cover {
+  height: 170px;
+  background: linear-gradient(120deg, var(--blue), #59b0f6);
+  background-size: cover;
+  background-position: center;
+}
+.profile-headrow {
   display: flex;
   gap: 1.25rem;
-  align-items: center;
+  align-items: flex-end;
+  padding: 0 1.5rem 1.5rem;
+  margin-top: -44px;
+}
+.profile-headrow .avatar {
+  border: 4px solid var(--card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+.profile-info {
+  padding-bottom: 0.2rem;
+}
+@media (max-width: 720px) {
+  .profile-cover {
+    height: 120px;
+  }
+  .profile-headrow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 .profile-info h1 {
   margin: 0;
@@ -2035,4 +2063,28 @@ a {
     font-size: 1.25rem;
     line-height: 1;
   }
+}
+
+/* ---- Portada en el editor de perfil ------------------------------------- */
+.edit-cover {
+  width: 100%;
+  height: 110px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: linear-gradient(120deg, var(--blue), #59b0f6);
+  background-size: cover;
+  background-position: center;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 0.5rem;
+}
+.edit-cover-badge {
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
 }

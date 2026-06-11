@@ -31,12 +31,14 @@ export class UsersService {
         ...(dto.displayName !== undefined && { displayName: dto.displayName }),
         ...(dto.bio !== undefined && { bio: dto.bio }),
         ...(dto.avatarUrl !== undefined && { avatarUrl: dto.avatarUrl }),
+        ...(dto.coverUrl !== undefined && { coverUrl: dto.coverUrl }),
       },
       select: {
         id: true,
         username: true,
         displayName: true,
         avatarUrl: true,
+        coverUrl: true,
         bio: true,
       },
     });

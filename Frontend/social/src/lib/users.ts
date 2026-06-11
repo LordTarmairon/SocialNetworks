@@ -4,6 +4,7 @@ export interface ProfileUpdate {
   displayName?: string;
   bio?: string;
   avatarUrl?: string;
+  coverUrl?: string;
 }
 
 export const usersApi = {
@@ -13,6 +14,7 @@ export const usersApi = {
       username: string;
       displayName: string;
       avatarUrl: string | null;
+      coverUrl: string | null;
       bio: string | null;
     }>('/users/me/profile', data),
 };

@@ -7,6 +7,7 @@ import { PostCard } from '../components/PostCard';
 import { TopBar } from '../components/TopBar';
 import { errorMessage } from '../lib/errors';
 import { friendsApi } from '../lib/friends';
+import { mediaUrl } from '../lib/media';
 import { socialApi, type Post, type Profile } from '../lib/social';
 
 const relationLabel: Record<Profile['relation'], string> = {
@@ -60,6 +61,15 @@ export function ProfilePage() {
       <main className="feed">
         {profile && (
           <section className="profile-header">
+            <div
+              className="profile-cover"
+              style={
+                profile.coverUrl
+                  ? { backgroundImage: `url(${mediaUrl(profile.coverUrl)})` }
+                  : undefined
+              }
+            />
+            <div className="profile-headrow">
             <Avatar
               name={profile.displayName}
               src={profile.avatarUrl}
@@ -143,6 +153,7 @@ export function ProfilePage() {
                   </button>
                 </div>
               )}
+            </div>
             </div>
           </section>
         )}
