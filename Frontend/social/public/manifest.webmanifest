@@ -1,0 +1,18 @@
+{
+  "name": "Mellon — Red social",
+  "short_name": "Mellon",
+  "description": "Red social: muro, fotos, historias, reels y más.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#e9eef3",
+  "theme_color": "#0067b8",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

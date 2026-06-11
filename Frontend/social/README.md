@@ -20,6 +20,8 @@ Red social estilo Tuenti/Facebook. Forma parte del monorepo
 - Buscador en vivo, «quién vio tu perfil» y **Reels** (vídeos cortos verticales
   con comentarios).
 - **Campana de notificaciones** en tiempo real (contador en vivo vía WebSocket).
+- **Modo oscuro**, diseño **responsive/móvil** (barra inferior) y **PWA** instalable.
+- Perfil con **foto de portada** además del avatar.
 
 ## Desarrollo
 

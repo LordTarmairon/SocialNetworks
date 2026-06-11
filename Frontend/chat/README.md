@@ -19,6 +19,7 @@ Cliente de mensajería estilo WhatsApp/Messenger. Forma parte del monorepo
 - **Llamadas de voz y vídeo** 1‑a‑1 (WebRTC; el servidor solo hace de
   señalización por WebSocket, el audio/vídeo viaja peer‑to‑peer).
 - Recibos de lectura y «última conexión» configurables en Ajustes.
+- Diseño **responsive/móvil** (lista ⇆ conversación) y **PWA** instalable.
 
 ## Desarrollo
 

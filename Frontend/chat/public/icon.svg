@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0b141a"/>
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#00a884" stroke-width="26"/>
+  <circle cx="256" cy="256" r="70" fill="#00a884"/>
+  <text x="256" y="300" font-family="Segoe UI, system-ui, sans-serif" font-size="110" font-weight="700" fill="#0b141a" text-anchor="middle">P</text>
+</svg>
