@@ -5,6 +5,7 @@ import {
   type ChangeEvent,
   type FormEvent,
 } from 'react';
+import { Link } from 'react-router-dom';
 import { Avatar } from '../components/Avatar';
 import {
   chatApi,
@@ -305,6 +306,14 @@ export function ConversationView({ conversation, meId, onOpenInfo }: Props) {
         className={`thread-header ${conversation.isGroup ? 'clickable' : ''}`}
         onClick={conversation.isGroup ? onOpenInfo : undefined}
       >
+        <Link
+          to="/"
+          className="thread-back"
+          title="Volver"
+          onClick={(e) => e.stopPropagation()}
+        >
+          ‹
+        </Link>
         <Avatar name={av.name} src={av.src} size={40} />
         <div className="thread-head-info">
           <div className="thread-name">{convName(conversation)}</div>

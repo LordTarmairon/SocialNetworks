@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { friendsApi, type SearchResult } from '../lib/friends';
 import { getTheme, toggleTheme, type Theme } from '../lib/theme';
 import { Avatar } from './Avatar';
+import { BottomNav } from './BottomNav';
 import { NotificationsBell } from './NotificationsBell';
 
 export function TopBar() {
@@ -61,6 +62,7 @@ export function TopBar() {
   }
 
   return (
+    <>
     <header className="topbar">
       <Link className="topbar-logo" to="/">
         mellon
@@ -89,12 +91,14 @@ export function TopBar() {
         )}
       </div>
       <nav className="topbar-nav">
-        <Link to="/">Inicio</Link>
-        <Link to="/reels">Reels</Link>
-        <Link to="/contactos">Contactos</Link>
-        <Link to="/eventos">Eventos</Link>
-        <Link to="/albumes">Fotos</Link>
-        <Link to="/guardados">Guardados</Link>
+        <span className="topbar-links">
+          <Link to="/">Inicio</Link>
+          <Link to="/reels">Reels</Link>
+          <Link to="/contactos">Contactos</Link>
+          <Link to="/eventos">Eventos</Link>
+          <Link to="/albumes">Fotos</Link>
+          <Link to="/guardados">Guardados</Link>
+        </span>
         <button
           className="topbar-theme"
           onClick={() => setTheme(toggleTheme())}
@@ -115,5 +119,7 @@ export function TopBar() {
         </button>
       </nav>
     </header>
+    <BottomNav />
+    </>
   );
 }

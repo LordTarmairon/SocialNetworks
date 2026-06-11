@@ -83,7 +83,7 @@ export function ChatPage() {
   const selected = conversations.find((c) => c.id === selectedId) ?? null;
 
   return (
-    <div className="chat-layout">
+    <div className={`chat-layout ${selectedId ? 'show-chat' : ''}`}>
       <aside className="sidebar">
         <div className="sidebar-brand">Palantír</div>
         <header className="sidebar-header">
