@@ -68,6 +68,33 @@ cp .env.example .env
 npm run dev                   # http://localhost:5174
 ```
 
+## Despliegue con Docker
+
+Todo el stack (PostgreSQL + API + las dos apps) se levanta con un comando:
+
+```bash
+docker compose up --build
+```
+
+- API → `http://localhost:3000/api`
+- Palantír → `http://localhost:5173`
+- Mellon → `http://localhost:5174`
+
+El contenedor de la API sincroniza el esquema con la base de datos al arrancar
+(`prisma db push`). Define `JWT_SECRET` en un `.env` junto al `docker-compose.yml`
+para producción. Las subidas y los datos persisten en volúmenes (`uploads`, `db-data`).
+
+> Migraciones versionadas: el proyecto sincroniza el esquema con `prisma db push`.
+> Para un flujo de migraciones con histórico, cambia a `prisma migrate deploy` y
+> versiona `Backend/prisma/migrations`.
+
+## Tests
+
+```bash
+cd Backend
+npm test            # unitarios (auth, posts/reels, señalización de llamadas)
+```
+
 ## Notas
 
 - Los secretos (`.env`), `node_modules`, builds (`dist/`), el cliente Prisma

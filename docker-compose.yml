@@ -1,0 +1,70 @@
+# Orquesta toda la plataforma: base de datos + API + las dos apps web.
+# Uso:  docker compose up --build
+#
+# Tras arrancar:
+#   - API        → http://localhost:3000/api
+#   - Palantír   → http://localhost:5173
+#   - Mellon     → http://localhost:5174
+#
+# Define JWT_SECRET en un .env junto a este fichero (o se usa el valor por
+# defecto, solo apto para pruebas locales).
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: socialnetwork
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d socialnetwork']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./Backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/socialnetwork?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:-cambia-esto-en-produccion}
+      JWT_EXPIRES_IN: 7d
+      PORT: 3000
+    ports:
+      - '3000:3000'
+    volumes:
+      - uploads:/app/uploads
+
+  chat:
+    build:
+      context: ./Frontend/chat
+      args:
+        VITE_API_URL: http://localhost:3000/api
+        VITE_WS_URL: http://localhost:3000
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - '5173:80'
+
+  social:
+    build:
+      context: ./Frontend/social
+      args:
+        VITE_API_URL: http://localhost:3000/api
+        VITE_WS_URL: http://localhost:3000
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - '5174:80'
+
+volumes:
+  db-data:
+  uploads:
